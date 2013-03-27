@@ -1,205 +1,1612 @@
+import java.math.BigInteger;
+import java.sql.*;
+
+// INSERT INTO
+// fb_customers(Customer_ID,Last_Name,First_Name,Street_Address,Apartment_Number,City,"
+// +
+// "Zip_Code,Phone_Number,Number_Children,Number_Adults,Number_Seniors,FoodStamps_Snap,TANF,SSI,Medicaid,HH_Income,"
+// + "Inc_Weekly,Inc_Monthly,Inc_Yearly,Offender) VALUES
 
 public class FBCustomer
 {
-	private int customerID;
-	private String lastName;
-	private String firstName;
-	private Address houseAddress = new Address(" ", " ", 0);
-	private long phoneNumber;
-	private FamilyMembers numOfFamily = new FamilyMembers(1,0,0);
-	private USDA_Qualifications qualifications = new USDA_Qualifications(0,0,0,0);
-	private HouseholdIncome income = new HouseholdIncome(0,0,0,0);
-	private int offender = 0;
+	private int customer_ID;
+	private boolean isConnected = false;
+	private Connection connR = null;
+	private ResultSet rsR = null;
+	private Statement stmtR = null;
+	private Connection connL = null;
+	private ResultSet rsL = null;
+	private Statement stmtL = null;
+
+	// creates new customer
+	public FBCustomer(Connection aConnR, Connection aConnL, boolean aIsConnected, String aLastName, String aFirstName, String aStreetAddress, String aApartmentNumber, String aCity, int aZipCode,
+			long aPhoneNumber, int numChildren, int numAdults, int numSeniors, int totalHouseHold, int aFoodStamps, int aTANF, int aSSI, int aMedicaid, int aHHIncome, int aIncWeekly, int aIncMonthly,
+			int aIncYearly, int aOffender) throws SQLException
+	{
+		connR = aConnR;
+		connL = aConnL;
+		isConnected = aIsConnected;
+		if(isConnected)
+		{
+			PreparedStatement prepR = connR.prepareStatement("insert into fb_customer values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+			String sql = "select * from fb_customer";
+			stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+			rsR = stmtR.executeQuery(sql);
+			rsR.last();
+			customer_ID = rsR.getInt("Customer_ID") + 1;
+			prepR.setInt(1, customer_ID);
+			prepR.setString(2, aLastName);
+			prepR.setString(3, aFirstName);
+			prepR.setString(4, aStreetAddress);
+			prepR.setString(5, aApartmentNumber);
+			prepR.setString(6, aCity);
+			prepR.setInt(7, aZipCode);
+			prepR.setLong(8, aPhoneNumber);
+			prepR.setInt(9, numChildren);
+			prepR.setInt(10, numAdults);
+			prepR.setInt(11, numSeniors);
+			prepR.setInt(12, numChildren + numAdults + numSeniors);
+			prepR.setInt(13, aFoodStamps);
+			prepR.setInt(14, aTANF);
+			prepR.setInt(15, aSSI);
+			prepR.setInt(16, aMedicaid);
+			prepR.setInt(17, aHHIncome);
+			prepR.setInt(18, aIncWeekly);
+			prepR.setInt(19, aIncMonthly);
+			prepR.setInt(20, aIncYearly);
+			prepR.setInt(21, aOffender);
+			prepR.addBatch();
+			connR.setAutoCommit(false);
+			prepR.executeBatch();
+			connR.setAutoCommit(true);
+		}
+		else
+		{
+			PreparedStatement prepL = connL.prepareStatement("insert into fb_customer values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+			String sql = "SELECT * FROM fb_customer WHERE Customer_ID = (SELECT MAX(Customer_ID) FROM fb_customer);";
+			stmtL = connL.createStatement();
+			rsL = stmtL.executeQuery(sql);
+			if(rsL.next())
+			{
+				customer_ID = rsL.getInt("Customer_ID") + 1;
+			}
+			else
+			{
+				customer_ID = 1;
+			}
+			prepL.setInt(1, customer_ID);
+			prepL.setString(2, aLastName);
+			prepL.setString(3, aFirstName);
+			prepL.setString(4, aStreetAddress);
+			prepL.setString(5, aApartmentNumber);
+			prepL.setString(6, aCity);
+			prepL.setInt(7, aZipCode);
+			prepL.setLong(8, aPhoneNumber);
+			prepL.setInt(9, numChildren);
+			prepL.setInt(10, numAdults);
+			prepL.setInt(11, numSeniors);
+			prepL.setInt(12, numChildren + numAdults + numSeniors);
+			prepL.setInt(13, aFoodStamps);
+			prepL.setInt(14, aTANF);
+			prepL.setInt(15, aSSI);
+			prepL.setInt(16, aMedicaid);
+			prepL.setInt(17, aHHIncome);
+			prepL.setInt(18, aIncWeekly);
+			prepL.setInt(19, aIncMonthly);
+			prepL.setInt(20, aIncYearly);
+			prepL.setInt(21, aOffender);
+			prepL.addBatch();
+			System.out.println("SQL1 " + prepL.toString());
+			System.out.println(prepL.getWarnings());
+			connL.setAutoCommit(false);
+			prepL.executeBatch();
+			connL.setAutoCommit(true);
+			prepL.close();
+			stmtL.close();
+			rsL.close();
+		}
+	}
+
+	public FBCustomer(Connection aConnR, Connection aConnL, boolean aIsConnected, int aCustomerID) throws SQLException
+	{
+		customer_ID = aCustomerID;
+		connR = aConnR;
+		connL = aConnL;
+		isConnected = aIsConnected;
+	}
 	
-	public FBCustomer(int aCustomerID, String aLastName, String aFirstName, Address aAddress, long aPhoneNumber, FamilyMembers aFamily, USDA_Qualifications aQualifications, HouseholdIncome aHHIncome)
+	public String getCreateCustomerQuery()
 	{
-		customerID = aCustomerID;
-		setLastName(aLastName);
-		setFirstName(aFirstName);
-		houseAddress = aAddress;
-		setPhoneNumber(aPhoneNumber);
-		numOfFamily = aFamily;
-		qualifications = aQualifications;
-		income = aHHIncome;
-		offender = 0;
+		String insertCustQuery = "INSERT INTO fb_customer(Customer_ID, Last_Name,First_Name,Street_Address,Apartment_Number,City,"
+				+ "Zip_Code,Phone_Number,Number_Children,Number_Adults,Number_Seniors,Total_Household,FoodStamps_Snap,TANF,SSI,Medicaid,HH_Income,"
+				+ "Inc_Weekly,Inc_Monthly,Inc_Yearly,Offender) VALUES (";
+		String temp = insertCustQuery + "'" + customer_ID + "','" + getLastName() + "','" + getFirstName() + "','"
+				+ getAddress() + "','" + getApt_Num() + "','"
+				+ getCity() + "','" + getZip_Code() + "','"
+				+ getPhone_Num() + "','" + getNum_Children() + "','"
+				+ getNum_Adults() + "','" + getNum_Seniors() + "','"
+				+ (getNum_Children() + getNum_Adults() + getNum_Seniors()) + "','" + getFoodstamps_Snap() + "','"
+				+ getTanf() + "','"+ getSsi() + "','"
+				+ getMedicaid() + "','" + getHh_Income() + "','"
+				+ getInc_Weekly() + "','" + getInc_Monthly() + "','"
+				+ getInc_Yearly() + "','" + getOffender() + "');";
+		return temp;
 	}
-	public FBCustomer(int aCustomerID, String aLastName, String aFirstName)
-	{
-		customerID = aCustomerID;
-		setLastName(aLastName);
-		setFirstName(aFirstName);
-	}
-	public void setAddress(String aStreetAddress, String aCity, int aZipCode)
-	{
-		houseAddress.setAddress(aStreetAddress, aCity, aZipCode);
-	}
-	public void setAddress(String aStreetAddress, int aApartmentNumber, String aCity, int aZipCode)
-	{
-		houseAddress.setAddress(aStreetAddress, aApartmentNumber, aCity, aZipCode);
-	}
+
 	public int getCustomerID()
 	{
-		return customerID;
+		return customer_ID;
 	}
-	public void setCustomerID(int aCustomerID)
-	{
-		customerID = aCustomerID;
-	}
-	public String getLastName()
-	{
-		return lastName;
-	}
-	public void setLastName(String aLastName)
-	{
-		lastName = aLastName;
-	}
+
 	public String getFirstName()
 	{
+		String firstName = "";
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				firstName = rsR.getString("First_Name");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				firstName = rsL.getString("First_Name");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
 		return firstName;
 	}
-	public void setFirstName(String aFirstName)
+
+	public String setFirstName(String aFirstName)
 	{
-		firstName = aFirstName;
+		if(isConnected)
+		{
+			try
+			{
+				/*String sql = "UPDATE fb_customer SET First_Name = ? WHERE Customer_ID = ?";
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.setString(1, aFirstName);
+				st.setString(2, "" + customer_ID);
+				st.executeUpdate();
+				return st.toString();*/
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET First_Name= '" + aFirstName + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET First_Name= '" + aFirstName + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
 	}
-	public String getStreetAddress()
+
+	public String getLastName()
 	{
-		return houseAddress.getStreetAddress();
+		String lastName = "";
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				lastName = rsR.getString("Last_Name");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				lastName = rsL.getString("Last_Name");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return lastName;
 	}
-	public void setStreetAddress(String aStreetAddress)
+
+	public String setLastName(String aLastName)
 	{
-		//System.out.println(aStreetAddress);
-		houseAddress.setStreetAddress(aStreetAddress);
+		if(isConnected)
+		{
+			try
+			{
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Last_Name= '" + aLastName + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Last_Name= '" + aLastName + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
 	}
-	public int getApartmentNumber()
+
+	public String getAddress()
 	{
-		return houseAddress.getApartmentNumber();
+		String address = "";
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				address = rsR.getString("Street_Address");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				address = rsL.getString("Street_Address");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return address;
 	}
-	public void setApartmentNumber(int aApartmentNumber)
+
+	public String setAddress(String aAddress)
 	{
-		houseAddress.setApartmentNumber(aApartmentNumber);
+		if(isConnected)
+		{
+			try
+			{
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Street_Address= '" + aAddress + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{	
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Street_Address= '" + aAddress + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
 	}
+
+	public int getApt_Num()
+	{
+		int aptNum = 0;
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				aptNum = rsR.getInt("Apartment_Number");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				aptNum = rsL.getInt("Apartment_Number");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return aptNum;
+	}
+
+	public String setApt_Num(String aAptNum)
+	{
+		if(isConnected)
+		{
+			try
+			{
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Apartment_Number= '" + aAptNum + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{	
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Apartment_Number= '" + aAptNum + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
+	}
+
 	public String getCity()
 	{
-		return houseAddress.getCity();
+		String city = "";
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				city = rsR.getString("City");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				city = rsL.getString("City");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return city;
 	}
-	public void setCity(String aCity)
+
+	public String setCity(String aCity)
 	{
-		houseAddress.setCity(aCity);
+		if(isConnected)
+		{
+			try
+			{
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET City= '" + aCity + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{	
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET City= '" + aCity + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
 	}
-	public int getZipCode()
+
+	public int getZip_Code()
 	{
-		return houseAddress.getZipCode();
+		int zipCode = 0;
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				zipCode = rsR.getInt("Zip_Code");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				zipCode = rsL.getInt("Zip_Code");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return zipCode;
 	}
-	public void setZipCode(int aZipCode)
+
+	public String setZip_Code(int aZipCode)
 	{
-		houseAddress.setZipCode(aZipCode);
+		if(isConnected)
+		{
+			try
+			{
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Zip_Code= '" + aZipCode + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Zip_Code= '" + aZipCode + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
 	}
-	public long getPhoneNumber()
+
+	public long getPhone_Num()
 	{
-		return phoneNumber;
+		long phoneNum = 0;
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				phoneNum = rsR.getLong("Phone_Number");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				phoneNum = rsL.getLong("Phone_Number");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return phoneNum;
 	}
-	public void setPhoneNumber(long aPhoneNumber)
+
+	public String setPhone_Num(long aPhoneNum)
 	{
-		phoneNumber = aPhoneNumber;
+		if(isConnected)
+		{
+			try
+			{
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Phone_Number= '" + aPhoneNum + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Phone_Number= '" + aPhoneNum + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
 	}
-	public int getNumOfChildren()
+
+	public int getNum_Children()
 	{
-		return numOfFamily.getNumberOfChildren();
+		int numChildren = 0;
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				numChildren = rsR.getInt("Number_Children");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				numChildren = rsL.getInt("Number_Children");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return numChildren;
 	}
-	public void setNumberOfChildren(int numChildren)
+
+	public String setNum_Children(int aNumChildren)
 	{
-		numOfFamily.setNumberOfChildren(numChildren);
+		if(isConnected)
+		{
+			try
+			{
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Number_Children= '" + aNumChildren + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				setTotal_Household();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{	
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Number_Children= '" + aNumChildren + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				setTotal_Household();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
 	}
-	public int getNumOfAdults()
+
+	public int getNum_Adults()
 	{
-		return numOfFamily.getNumberOfAdults();
+		int numAdults = 0;
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				numAdults = rsR.getInt("Number_Adults");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				numAdults = rsL.getInt("Number_Adults");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return numAdults;
 	}
-	public void setNumberOfAdults(int numAdults)
+
+	public String setNum_Adults(int aNumAdults)
 	{
-		numOfFamily.setNumberOfAdults(numAdults);
+		if(isConnected)
+		{
+			try
+			{
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Number_Adults= '" + aNumAdults + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				setTotal_Household();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Number_Adults= '" + aNumAdults + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				setTotal_Household();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
 	}
-	public int getNumOfSeniors()
+
+	public int getNum_Seniors()
 	{
-		return numOfFamily.getNumberOfSeniors();
+		int numSeniors = 0;
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				numSeniors = rsR.getInt("Number_Seniors");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				numSeniors = rsL.getInt("Number_Seniors");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return numSeniors;
 	}
-	public void setNumberOfSeniors(int numSeniors)
+
+	public String setNum_Seniors(int aNumSeniors)
 	{
-		numOfFamily.setNumberOfSeniors(numSeniors);
+		if(isConnected)
+		{
+			try
+			{
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Number_Seniors= '" + aNumSeniors + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				setTotal_Household();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Number_Seniors= '" + aNumSeniors + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				setTotal_Household();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
 	}
-	public int getFamilyTotal()
+
+	public int getTotal_Household()
 	{
-		return numOfFamily.getFamilyTotal();
+		int totalHousehold = 0;
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				totalHousehold = rsR.getInt("Total_Household");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				totalHousehold = rsL.getInt("Total_Household");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return totalHousehold;
 	}
-	public int isQualificationsFoodStamps()
+
+	public String setTotal_Household()
 	{
-		return qualifications.isFoodStamps();
+		if(isConnected)
+		{
+			try
+			{
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Total_Household= '" + (getNum_Children()+ getNum_Adults() + getNum_Seniors()) + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Total_Household= '" + (getNum_Children()+ getNum_Adults() + getNum_Seniors()) + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
 	}
-	public void setQualificationsFoodStamps(int aFoodStamps)
+
+	public int getFoodstamps_Snap()
 	{
-		qualifications.setFoodStamps(aFoodStamps);
+		int foodStamps = 0;
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				foodStamps = rsR.getInt("FoodStamps_SNAP");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				foodStamps = rsL.getInt("FoodStamps_SNAP");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return foodStamps;
 	}
-	public int isQualificationsTANF()
+
+	public String setFoodStamps_Snap(int aFoodStamps)
 	{
-		return qualifications.isTANF();
+		if(isConnected)
+		{
+			try
+			{
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET FoodStamps_SNAP= '" + aFoodStamps + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET FoodStamps_SNAP= '" + aFoodStamps + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
 	}
-	public void setQualificationsTANF(int aTANF)
+
+	public int getTanf()
 	{
-		qualifications.setTANF(aTANF);
+		int TANF = 0;
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				TANF = rsR.getInt("TANF");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				TANF = rsL.getInt("TANF");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return TANF;
 	}
-	public int isQualificationsSSI()
+
+	public String setTanf(int aTANF)
 	{
-		return qualifications.isSSI();
+		if(isConnected)
+		{
+			try
+			{
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET TANF= '" + aTANF + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{				
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET TANF= '" + aTANF + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
 	}
-	public void setQualificationsSSI(int aSSI)
+
+	public int getSsi()
 	{
-		qualifications.setSSI(aSSI);
+		int SSI = 0;
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				SSI = rsR.getInt("SSI");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				SSI = rsL.getInt("SSI");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return SSI;
 	}
-	public int isQualificationsMedicaid()
+
+	public String setSsi(int aSSI)
 	{
-		return qualifications.isMedicaid();
+		if(isConnected)
+		{
+			try
+			{
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET SSI= '" + aSSI + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{	
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET SSI= '" + aSSI + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
 	}
-	public void setQualificationsMedicaid(int aMedicaid)
+
+	public int getMedicaid()
 	{
-		qualifications.setMedicaid(aMedicaid);
+		int medicaid = 0;
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				medicaid = rsR.getInt("Medicaid");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				medicaid = rsL.getInt("Medicaid");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return medicaid;
 	}
-	public int getIncome()
+
+	public String setMedicaid(int aMedicaid)
 	{
-		return income.getIncome();
+		if(isConnected)
+		{
+			try
+			{
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Medicaid= '" + aMedicaid + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Medicaid= '" + aMedicaid + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
 	}
-	public void setIncome(int aIncome)
+
+	public int getHh_Income()
 	{
-		income.setIncome(aIncome);
+		int hh_Income = 0;
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				hh_Income = rsR.getInt("HH_Income");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				hh_Income = rsL.getInt("HH_Income");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return hh_Income;
 	}
-	public int isIncomeWeekly()
+
+	public String setHh_Income(int aHh_Income)
 	{
-		return income.isWeekly();
+		if(isConnected)
+		{
+			try
+			{
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET HH_Income= '" + aHh_Income + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET HH_Income= '" + aHh_Income + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
 	}
-	public void setIncomeWeekly(int aWeekly)
+
+	public int getInc_Monthly()
 	{
-		income.setWeekly(aWeekly);
+		int incMonthly = 0;
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				incMonthly = rsR.getInt("Inc_Monthly");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				incMonthly = rsL.getInt("Inc_Monthly");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return incMonthly;
 	}
-	public int isIncomeMonthly()
+
+	public String setInc_Monthly(int aInc_Monthly)
 	{
-		return income.isMonthly();
+		if(isConnected)
+		{
+			try
+			{
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Inc_Monthly= '" + aInc_Monthly + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Inc_Monthly= '" + aInc_Monthly + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
 	}
-	public void setIncomeMonthly(int aMonthly)
+
+	public int getInc_Weekly()
 	{
-		income.setMonthly(aMonthly);
+		int incWeekly = 0;
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				incWeekly = rsR.getInt("Inc_Weekly");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				incWeekly = rsL.getInt("Inc_Weekly");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return incWeekly;
 	}
-	public int isIncomeYearly()
+
+	public String setInc_Weekly(int aIncWeekly)
 	{
-		return income.isYearly();
+		if(isConnected)
+		{
+			try
+			{
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Inc_Weekly= '" + aIncWeekly + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Inc_Weekly= '" + aIncWeekly + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
 	}
-	public void setIncomeYearly(int aYearly)
+
+	public int getInc_Yearly()
 	{
-		income.setYearly(aYearly);
+		int incYearly = 0;
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				incYearly = rsR.getInt("Inc_Yearly");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				incYearly = rsL.getInt("Inc_Yearly");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return incYearly;
 	}
-	public int isOffender()
+
+	public String setInc_Yearly(int aIncYearly)
 	{
+		if(isConnected)
+		{
+			try
+			{
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Inc_Yearly= '" + aIncYearly + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Inc_Yearly= '" + aIncYearly + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
+	}
+
+	public int getOffender()
+	{
+		int offender = 0;
+		if(isConnected)
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+				rsR = stmtR.executeQuery(sql);
+				rsR.next();
+				offender = rsR.getInt("Number_Seniors");
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				String sql = "SELECT * FROM fb_customer WHERE Customer_ID = " + customer_ID;
+				stmtL = connL.createStatement();
+				rsL = stmtL.executeQuery(sql);
+				rsL.next();
+				offender = rsL.getInt("Number_Seniors");
+				stmtL.close();
+				rsL.close();
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
 		return offender;
 	}
-	public void setOffender(int aOffender)
+
+	public String setOffender(int aOffender)
 	{
-		offender = aOffender;
+		if(isConnected)
+		{
+			try
+			{
+				connR.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Offender= '" + aOffender + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connR.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try
+			{
+				connL.setAutoCommit(true);
+				String sql = "UPDATE fb_customer SET Offender= '" + aOffender + "' WHERE Customer_ID=" + customer_ID;
+				PreparedStatement st = connL.prepareStatement(sql);
+				st.execute();
+				return sql;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return "";
 	}
 }
