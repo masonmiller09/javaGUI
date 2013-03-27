@@ -698,7 +698,16 @@ public class GUIFrame extends JFrame
         {
             try
             {
-                result.absolute( r + 1 );
+                if(online){
+                    result = stmtR.executeQuery( DEFAULT_QUERY );
+                    result.absolute( r + 1 );
+                }
+                else{
+                    
+                    System.out.println("r + 1: " + r + 1);
+                    String SELECT_ONE_ROW = "SELECT * FROM fb_customer LIMIT 1 OFFSET " + r + ";";
+                    result = stmtL.executeQuery( SELECT_ONE_ROW);                 
+                }                
                 // System.out.println(r+1);
                 return result.getObject( col + 1 );
             }
