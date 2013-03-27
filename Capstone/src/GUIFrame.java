@@ -639,9 +639,9 @@ public class GUIFrame extends JFrame
                 }
                 else
                 {
-                    String sql = "SELECT * FROM fb_customer WHERE Customer_ID = (SELECT MAX(Customer_ID) FROM fb_customer);";
-                    result = stmtL.executeQuery( sql );
-                    numberOfRows = result.getRow();
+                    String allIDS = "SELECT COUNT(Customer_ID) FROM fb_customer;";
+                    result = stmtL.executeQuery( allIDS );
+                    numberOfRows = result.getInt(1);                  
                     result = stmtL.executeQuery(query);
                     metaData = result.getMetaData();
                 }
