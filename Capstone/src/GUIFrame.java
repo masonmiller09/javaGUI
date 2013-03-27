@@ -48,6 +48,8 @@ public class GUIFrame extends JFrame
     private JTextField searchBox;
 
     private JLabel searchLabel;
+    
+    private StatusBar statusBar;
 
     private JComboBox<String> searchOptions;
 
@@ -133,12 +135,18 @@ public class GUIFrame extends JFrame
         searchBox.setFont( new Font( "Verdana", Font.PLAIN, 12 ) );
         paneTop.add( panel, BorderLayout.EAST );
         paneBottom = new JPanel();
+        paneBottom.setLayout( new BorderLayout() );
+        statusBar = new StatusBar(connR, connL);
+        paneBottom.add(statusBar, BorderLayout.SOUTH);
+        JPanel paneBottomBody = new JPanel();
+        paneBottom.add( paneBottomBody, BorderLayout.NORTH );
+        paneBottom.add( new JSeparator(SwingConstants.HORIZONTAL) );
         viewButton = new JButton( "View" );
         reportButton = new JButton( "Report" );
         distributionButton = new JButton( "Distributions" );
-        paneBottom.add( viewButton );
-        paneBottom.add( reportButton );
-        paneBottom.add( distributionButton );
+        paneBottomBody.add( viewButton );
+        paneBottomBody.add( reportButton );
+        paneBottomBody.add( distributionButton );
         add( paneBottom, BorderLayout.SOUTH );
         model = new FeastTableModel( connR, connL, online, DEFAULT_QUERY );
         table = new JTable( model );
