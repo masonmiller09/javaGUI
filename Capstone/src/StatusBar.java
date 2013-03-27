@@ -20,11 +20,11 @@ public class StatusBar extends JLabel
 	private Connection connR = null;
 	private Connection connL = null;
 	
-	public StatusBar(Connection connR, Connection connL, boolean aIsConnected)
+	public StatusBar(Connection connR, Connection connL)
 	{
 		super();
 		super.setPreferredSize(new Dimension(100, 16));
-		isConnected = aIsConnected;
+		isConnected = canConnect();
 		Timer t = new Timer();
 		t.scheduleAtFixedRate(new TimerTask()
 		{
