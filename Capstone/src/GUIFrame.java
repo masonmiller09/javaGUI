@@ -32,9 +32,11 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -88,7 +90,9 @@ public class GUIFrame extends JFrame
     static functions f;
 
     static final String DEFAULT_QUERY = "SELECT Customer_ID, Last_Name, First_Name, Street_Address, Apartment_Number, City, Zip_Code, Phone_Number FROM fb_customer;";
-
+    
+    static final String SIZE_DATABASE_QUERY = "SELECT COUNT(Customer_ID) FROM fb_customer;";
+    
     static final String FULL_DATA_QUERY = "SELECT * FROM fb_customer;";
 
 
@@ -647,14 +651,13 @@ public class GUIFrame extends JFrame
                 }
                 else
                 {
-                    String allIDS = "SELECT COUNT(Customer_ID) FROM fb_customer;";
-                    result = stmtL.executeQuery( allIDS );
+                    result = stmtL.executeQuery( SIZE_DATABASE_QUERY );
                     numberOfRows = result.getInt(1);                  
                     result = stmtL.executeQuery(query);
                     metaData = result.getMetaData();
                 }
 
-                System.out.println( "Here" );
+                // vcxSystem.out.println();
                 fireTableStructureChanged();
             }
             catch ( SQLException e )
@@ -706,6 +709,7 @@ public class GUIFrame extends JFrame
         {
             try
             {
+                System.out.println("online: " + online);
                 if(online){
                     result = stmtR.executeQuery( DEFAULT_QUERY );
                     result.absolute( r + 1 );
@@ -716,6 +720,7 @@ public class GUIFrame extends JFrame
                     String SELECT_ONE_ROW = "SELECT * FROM fb_customer LIMIT 1 OFFSET " + r + ";";
                     result = stmtL.executeQuery( SELECT_ONE_ROW);                 
                 }                
+                
                 // System.out.println(r+1);
                 return result.getObject( col + 1 );
             }
