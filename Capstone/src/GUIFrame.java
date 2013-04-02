@@ -50,7 +50,7 @@ public class GUIFrame extends JFrame
     private JTextField searchBox;
 
     private JLabel searchLabel;
-    
+
     private StatusBar statusBar;
 
     private JComboBox<String> searchOptions;
@@ -89,11 +89,11 @@ public class GUIFrame extends JFrame
 
     static functions f;
 
-    static final String DEFAULT_QUERY = "SELECT Customer_ID, Last_Name, First_Name, Street_Address, Apartment_Number, City, Zip_Code, Phone_Number FROM fb_customer;";
-    
-    static final String SIZE_DATABASE_QUERY = "SELECT COUNT(Customer_ID) FROM fb_customer;";
-    
-    static final String FULL_DATA_QUERY = "SELECT * FROM fb_customer;";
+    static final String DEFAULT_QUERY = "SELECT Customer_ID, Last_Name, First_Name, Street_Address, Apartment_Number, City, Zip_Code, Phone_Number FROM jos_fb_customer;";
+
+    static final String SIZE_DATABASE_QUERY = "SELECT COUNT(Customer_ID) FROM jos_fb_customer;";
+
+    static final String FULL_DATA_QUERY = "SELECT * FROM jos_fb_customer;";
 
 
     public GUIFrame()
@@ -108,7 +108,7 @@ public class GUIFrame extends JFrame
         JMenu file = new JMenu( "File" );
         file.enable( true );
         JMenuItem insert = file.add( "Insert" );
-        JMenuItem delete = file.add( "Delete" );
+        // JMenuItem delete = file.add( "Delete" );
         JMenuItem print = file.add( "Printable DB" );
         f = new functions( connR, connL );
         JMenuItem exit = file.add( "Exit" );
@@ -140,11 +140,11 @@ public class GUIFrame extends JFrame
         paneTop.add( panel, BorderLayout.EAST );
         paneBottom = new JPanel();
         paneBottom.setLayout( new BorderLayout() );
-        statusBar = new StatusBar(connR, connL);
-        paneBottom.add(statusBar, BorderLayout.SOUTH);
+        statusBar = new StatusBar( connR, connL );
+        paneBottom.add( statusBar, BorderLayout.SOUTH );
         JPanel paneBottomBody = new JPanel();
         paneBottom.add( paneBottomBody, BorderLayout.NORTH );
-        paneBottom.add( new JSeparator(SwingConstants.HORIZONTAL) );
+        paneBottom.add( new JSeparator( SwingConstants.HORIZONTAL ) );
         viewButton = new JButton( "View" );
         reportButton = new JButton( "Report" );
         distributionButton = new JButton( "Distributions" );
@@ -229,9 +229,11 @@ public class GUIFrame extends JFrame
             {
             }
 
+
             public void windowClosed( WindowEvent arg0 )
             {
             }
+
 
             public void windowClosing( WindowEvent arg0 )
             {
@@ -279,12 +281,12 @@ public class GUIFrame extends JFrame
                 String request;
                 if ( option == "Agency" )
                 {
-                    request = new String( "SELECT * FROM fb_agency WHERE Agency_Name LIKE \'"
+                    request = new String( "SELECT * FROM jos_fb_agency WHERE Agency_Name LIKE \'"
                         + text + "%\'" );
                 }
                 else if ( option == "Agent" )
                 {
-                    request = new String( "SELECT * FROM fb_agencyRep WHERE Rep_FName LIKE \'"
+                    request = new String( "SELECT * FROM jos_fb_agencyRep WHERE Rep_FName LIKE \'"
                         + text + "%\' or Rep_LName LIKE \'" + text + "%\'" );
                 }
                 else if ( text == "" )
@@ -293,12 +295,12 @@ public class GUIFrame extends JFrame
                 }
                 else if ( option == "Zip_Code" )
                 {
-                    request = new String( "SELECT * FROM fb_customer WHERE "
+                    request = new String( "SELECT * FROM jos_fb_customer WHERE "
                         + option + " LIKE \'" + text + "\'" );
                 }
                 else
                 {
-                    request = new String( "SELECT * FROM fb_customer WHERE First_Name LIKE  \'"
+                    request = new String( "SELECT * FROM jos_fb_customer WHERE First_Name LIKE  \'"
                         + text + "%\' or Last_Name LIKE \'" + text + "%\'" );
                 }
                 try
@@ -335,12 +337,12 @@ public class GUIFrame extends JFrame
                 String request;
                 if ( option == "Agency" )
                 {
-                    request = new String( "SELECT * FROM fb_agency WHERE Agency_Name LIKE \'"
+                    request = new String( "SELECT * FROM jos_fb_agency WHERE Agency_Name LIKE \'"
                         + text + "%\'" );
                 }
                 else if ( option == "Agent" )
                 {
-                    request = new String( "SELECT * FROM fb_agencyRep WHERE Rep_FName LIKE \'"
+                    request = new String( "SELECT * FROM jos_fb_agencyRep WHERE Rep_FName LIKE \'"
                         + text + "%\' or Rep_LName LIKE \'" + text + "%\'" );
                 }
                 else if ( text == "" || option == "" )
@@ -349,12 +351,12 @@ public class GUIFrame extends JFrame
                 }
                 else if ( option == "Zip_Code" )
                 {
-                    request = new String( "SELECT * FROM fb_customer WHERE "
+                    request = new String( "SELECT * FROM jos_fb_customer WHERE "
                         + option + " LIKE \'" + text + "\'" );
                 }
                 else
                 {
-                    request = new String( "SELECT * FROM fb_customer WHERE First_Name LIKE  \'"
+                    request = new String( "SELECT * FROM jos_fb_customer WHERE First_Name LIKE  \'"
                         + text + "%\' or Last_Name LIKE \'" + text + "%\'" );
                 }
                 try
@@ -468,8 +470,22 @@ public class GUIFrame extends JFrame
                 int move;
                 try
                 {
+                   if(!online)
+                    {
+                       move = selected.get(0);
+                       String SELECT_ONE_ROW = "SELECT * FROM jos_fb_customer LIMIT 1 OFFSET "
+                           + move + ";";
+                        result = stmt.executeQuery( SELECT_ONE_ROW );
+                        for(int i = 0; i < selected.size(); i++){
+                            System.out.println("indexes: " + selected.get( i ));
+                        }                        
+                        System.out.println("move: " + move);
+                    }
+                    else{
                     move = result.getRow();
+                    System.out.println("move: " + move);
                     result.relative( -move );
+                    }
                 }
                 catch ( SQLException e2 )
                 {
@@ -479,41 +495,44 @@ public class GUIFrame extends JFrame
                 {
                     try
                     {
-                        for ( int j = 0; j < selected.size(); j++ )
+                        if ( selected != null )
                         {
-                            if ( result.getRow() == selected.get( j ) )
+                            for ( int j = 0; j < selected.size(); j++ )
                             {
-                                Integer id = (Integer)result.getInt( 1 );
-                                int one = 1;
-                                try
+                                if ( result.getRow() == selected.get( j ) )
                                 {
-                                    currentInfo = functions.retrieveUser( id,
-                                        fbd.isConnected );
-                                    System.out.println( "Retrieving Agency" );
-                                    Object[] agencyInfo = functions.retrieveAgency( one,
-                                        fbd.isConnected );
-                                    System.out.println( "Retrieving Agent" );
-                                    Object[] agentInfo = functions.retrieveAgent( one,
-                                        fbd.isConnected );
-                                    PdfGenerator.populateSDIForm( currentInfo,
-                                        agencyInfo,
-                                        agentInfo,
-                                        population );
-                                    population++;
-                                }
-                                catch ( NoSuchObjectException o )
-                                {
-                                    // TODO Auto-generated catch block
-                                    JOptionPane.showMessageDialog( null,
-                                        "There is no user: \"" + id
-                                            + "\" in the database",
-                                        "Customer Search Error",
-                                        JOptionPane.INFORMATION_MESSAGE );
-                                }
-                                catch ( NumberFormatException o )
-                                {
-                                    // TODO Auto-generated catch block
-                                    o.printStackTrace();
+                                    Integer id = (Integer)result.getInt( 1 );
+                                    int one = 1;
+                                    try
+                                    {
+                                        currentInfo = functions.retrieveUser( id,
+                                            fbd.isConnected );
+                                        System.out.println( "Retrieving Agency" );
+                                        Object[] agencyInfo = functions.retrieveAgency( one,
+                                            fbd.isConnected );
+                                        System.out.println( "Retrieving Agent" );
+                                        Object[] agentInfo = functions.retrieveAgent( one,
+                                            fbd.isConnected );
+                                        PdfGenerator.populateSDIForm( currentInfo,
+                                            agencyInfo,
+                                            agentInfo,
+                                            population );
+                                        population++;
+                                    }
+                                    catch ( NoSuchObjectException o )
+                                    {
+                                        // TODO Auto-generated catch block
+                                        JOptionPane.showMessageDialog( null,
+                                            "There is no user: \"" + id
+                                                + "\" in the database",
+                                            "Customer Search Error",
+                                            JOptionPane.INFORMATION_MESSAGE );
+                                    }
+                                    catch ( NumberFormatException o )
+                                    {
+                                        // TODO Auto-generated catch block
+                                        o.printStackTrace();
+                                    }
                                 }
                             }
                         }
@@ -621,7 +640,8 @@ public class GUIFrame extends JFrame
             connectedToDatabase = online;
             try
             {
-                System.out.println("Test connection local: " + connL.toString());
+                System.out.println( "Test connection local: "
+                    + connL.toString() );
                 stmtL = connL.createStatement();
                 if ( connectedToDatabase )
                 {
@@ -652,8 +672,8 @@ public class GUIFrame extends JFrame
                 else
                 {
                     result = stmtL.executeQuery( SIZE_DATABASE_QUERY );
-                    numberOfRows = result.getInt(1);                  
-                    result = stmtL.executeQuery(query);
+                    numberOfRows = result.getInt( 1 );
+                    result = stmtL.executeQuery( query );
                     metaData = result.getMetaData();
                 }
 
@@ -709,18 +729,19 @@ public class GUIFrame extends JFrame
         {
             try
             {
-                System.out.println("online: " + online);
-                if(online){
+                if ( online )
+                {
                     result = stmtR.executeQuery( DEFAULT_QUERY );
                     result.absolute( r + 1 );
                 }
-                else{
-                    
-                    System.out.println("r + 1: " + r + 1);
-                    String SELECT_ONE_ROW = "SELECT * FROM fb_customer LIMIT 1 OFFSET " + r + ";";
-                    result = stmtL.executeQuery( SELECT_ONE_ROW);                 
-                }                
-                
+                else
+                {
+
+                    String SELECT_ONE_ROW = "SELECT * FROM jos_fb_customer LIMIT 1 OFFSET "
+                        + r + ";";
+                    result = stmtL.executeQuery( SELECT_ONE_ROW );
+                }
+
                 // System.out.println(r+1);
                 return result.getObject( col + 1 );
             }
