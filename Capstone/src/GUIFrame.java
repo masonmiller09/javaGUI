@@ -3,6 +3,7 @@ import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -21,6 +22,7 @@ import java.sql.Statement;
 import java.util.Vector;
 import java.util.ArrayList;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
@@ -41,19 +43,23 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.PlainDocument;
+import javax.swing.text.AttributeSet;
 
 
 public class GUIFrame extends JFrame
 {
     private JPanel panel, paneTop, paneBottom;
 
-    private JTextField searchBox;
+    private JTextField searchBox, year;
 
-    private JLabel searchLabel;
+    private JLabel searchLabel,monthLabel,dayLabel,yearLabel;
 
     private StatusBar statusBar;
 
-    private JComboBox<String> searchOptions;
+    private JComboBox<String> searchOptions, month, day;
 
     private JButton searchButton, viewButton, reportButton, distributionButton;
 
@@ -63,7 +69,9 @@ public class GUIFrame extends JFrame
 
     private Object[] currentInfo;
 
-    private String[] cbList = { "", "Agency", "Customer", "Agent", "Zip_Code" };
+    private String[] cbList = { "", "Agency", "Customer", "Customer ID", "Distribution Date" };
+    
+    private String[] monthList = {"","01","02","03","04","05","06","07","08","09","10","11","12"};
 
     int population = 0;
 
@@ -88,12 +96,16 @@ public class GUIFrame extends JFrame
     static FBDatabase fbd;
 
     static functions f;
+    
+    static final String INITIAL_QUERY = "SELECT Customer_ID, Last_Name, First_Name, Street_Address, Apartment_Number, City, Zip_Code, Phone_Number FROM jos_fb_customer WHERE Customer_ID LIKE 'a';";
 
     static final String DEFAULT_QUERY = "SELECT Customer_ID, Last_Name, First_Name, Street_Address, Apartment_Number, City, Zip_Code, Phone_Number FROM jos_fb_customer;";
 
     static final String SIZE_DATABASE_QUERY = "SELECT COUNT(Customer_ID) FROM jos_fb_customer;";
 
     static final String FULL_DATA_QUERY = "SELECT * FROM jos_fb_customer;";
+    
+    private String previous,prevMonth;
 
 
     public GUIFrame()
@@ -132,11 +144,11 @@ public class GUIFrame extends JFrame
         searchButton = new JButton( "Search" );
         searchLabel = new JLabel( "Search by: " );
         searchOptions = new JComboBox( cbList );
+	month = new JComboBox(monthList);
+	year = new JTextField(4);
+    	final int limit = 4;
         panel.add( searchLabel, BorderLayout.EAST );
         panel.add( searchOptions, BorderLayout.EAST );
-        panel.add( searchBox, BorderLayout.EAST );
-        panel.add( searchButton, BorderLayout.EAST );
-        searchBox.setFont( new Font( "Verdana", Font.PLAIN, 12 ) );
         paneTop.add( panel, BorderLayout.EAST );
         paneBottom = new JPanel();
         paneBottom.setLayout( new BorderLayout() );
@@ -152,7 +164,7 @@ public class GUIFrame extends JFrame
         paneBottomBody.add( reportButton );
         paneBottomBody.add( distributionButton );
         add( paneBottom, BorderLayout.SOUTH );
-        model = new FeastTableModel( connR, connL, online, DEFAULT_QUERY );
+        model = new FeastTableModel( connR, connL, online, INITIAL_QUERY );
         table = new JTable( model );
         listModel = table.getSelectionModel();
         listModel.setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
@@ -284,19 +296,13 @@ public class GUIFrame extends JFrame
                     request = new String( "SELECT * FROM jos_fb_agency WHERE Agency_Name LIKE \'"
                         + text + "%\'" );
                 }
-                else if ( option == "Agent" )
-                {
-                    request = new String( "SELECT * FROM jos_fb_agencyRep WHERE Rep_FName LIKE \'"
-                        + text + "%\' or Rep_LName LIKE \'" + text + "%\'" );
-                }
+                else if (option == "Customer ID") {
+	            	request = new String ("SELECT * FROM jos_fb_customer WHERE Customer_ID LIKE \'"+ text +"%\'");
+	        }
+	        
                 else if ( text == "" )
                 {
                     request = DEFAULT_QUERY;
-                }
-                else if ( option == "Zip_Code" )
-                {
-                    request = new String( "SELECT * FROM jos_fb_customer WHERE "
-                        + option + " LIKE \'" + text + "\'" );
                 }
                 else
                 {
@@ -340,19 +346,18 @@ public class GUIFrame extends JFrame
                     request = new String( "SELECT * FROM jos_fb_agency WHERE Agency_Name LIKE \'"
                         + text + "%\'" );
                 }
-                else if ( option == "Agent" )
-                {
-                    request = new String( "SELECT * FROM jos_fb_agencyRep WHERE Rep_FName LIKE \'"
-                        + text + "%\' or Rep_LName LIKE \'" + text + "%\'" );
+                else if (option == "Customer ID") {
+                    request = new String ("SELECT * FROM jos_fb_customer WHERE Customer_ID LIKE \'"+ text +"%\'");
                 }
+                else if (option == "Distribution Date") {
+	            String y = year.getText();
+	            String m = (String)month.getSelectedItem();
+	            String d = (String)month.getSelectedItem();
+	            request = new String ("SELECT * FROM jos_fb_monthlyDist WHERE Date = \'"+y+"-"+m+"-"+d+"\'")
+	        }
                 else if ( text == "" || option == "" )
                 {
                     request = DEFAULT_QUERY;
-                }
-                else if ( option == "Zip_Code" )
-                {
-                    request = new String( "SELECT * FROM jos_fb_customer WHERE "
-                        + option + " LIKE \'" + text + "\'" );
                 }
                 else
                 {
@@ -571,6 +576,138 @@ public class GUIFrame extends JFrame
                 }
             }
         } );
+        
+        searchOptions.addActionListener (new ActionListener () {
+	        public void actionPerformed(ActionEvent e) {
+	            String option = (String)searchOptions.getSelectedItem();
+	            if (option == "Customer" || option == "Customer ID" || option == "Agency") {
+	            	if (previous == null) {
+		            	panel.add(searchBox, BorderLayout.EAST);
+		            	panel.add(searchButton,BorderLayout.EAST);
+		            	searchBox.setFont(new Font("Verdana",Font.PLAIN,12));
+		            	revalidate();
+	            	}
+	            	else if (previous == "Distribution Date"){
+	            		panel.removeAll();
+	            		panel.add(searchLabel,BorderLayout.EAST);
+	            		panel.add(searchOptions,BorderLayout.EAST);
+	            		panel.add(searchBox,BorderLayout.EAST);
+	            		panel.add(searchButton,BorderLayout.EAST);
+	            		revalidate();
+	            	}
+	            	else {
+	            		revalidate();
+	            	}
+	            }
+	            else if (option == "Distribution Date") {
+	            	if (previous == null) {
+		            	panel.add(monthLabel,BorderLayout.EAST);
+		            	panel.add(month,BorderLayout.EAST);
+		            	panel.add(yearLabel,BorderLayout.EAST);
+		            	panel.add(year, BorderLayout.EAST);
+		            	panel.add(searchButton,BorderLayout.EAST);
+		            	revalidate();
+	            	}
+	            	else if (previous == "Customer" || previous == "Customer ID" || previous == "Agency") {
+		            	panel.removeAll();
+		            	panel.add(searchLabel,BorderLayout.EAST);
+		            	panel.add(searchOptions,BorderLayout.EAST);
+		            	panel.add(monthLabel,BorderLayout.EAST);
+		            	panel.add(month,BorderLayout.EAST);
+		            	panel.add(yearLabel,BorderLayout.EAST);
+		            	panel.add(year, BorderLayout.EAST);
+		            	panel.add(searchButton,BorderLayout.EAST);
+		            	revalidate();
+	            	}
+	            	else {
+	            		revalidate();
+	            	}
+	            }
+	            else {
+	            	revalidate();
+	            }
+	    	previous = option;
+	        }
+	    });
+        
+        month.addActionListener(new ActionListener () {
+	    public void actionPerformed(ActionEvent l) {
+	    	String m = (String)month.getSelectedItem();
+	    	String[] days;
+	    	if (m == "02") {
+	    		String[] dayList = {"","01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29"};
+	    		days = dayList;
+	    	}
+	    	else if (m == "04" || m == "06" || m == "09" || m == "11") {
+	    		String[] dayList = {"","01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30"};
+	    		days = dayList;
+	    	}
+	    	else {
+	    		String[] dayList = {"","01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31"};
+	    		days = dayList;
+	    	}
+	    	day = new JComboBox(days);
+	    	if (prevMonth == null) {
+			panel.remove(yearLabel);
+			panel.remove(year);
+			panel.remove(searchButton);
+			panel.add(dayLabel,BorderLayout.EAST);
+			panel.add(day,BorderLayout.EAST);
+			panel.add(yearLabel,BorderLayout.EAST);
+			panel.add(year,BorderLayout.EAST);
+		panel.add(searchButton,BorderLayout.EAST);
+			revalidate();
+	    	}
+	    	else {
+	    		panel.removeAll();
+	    	panel.add(searchLabel,BorderLayout.EAST);
+	    	panel.add(searchOptions,BorderLayout.EAST);
+	    	panel.add(monthLabel,BorderLayout.EAST);
+	    	panel.add(month,BorderLayout.EAST);
+	    	panel.add(dayLabel,BorderLayout.EAST);
+			panel.add(day,BorderLayout.EAST);
+			panel.add(yearLabel,BorderLayout.EAST);
+			panel.add(year,BorderLayout.EAST);
+		panel.add(searchButton,BorderLayout.EAST);
+			revalidate();
+	    	}
+	    	prevMonth = m;
+	    }
+    	});
+    	
+    	year.setDocument(new PlainDocument(){
+    	    @Override
+    	    public void insertString(int offs, String str, AttributeSet a)
+    	            throws BadLocationException {
+    	        if(getLength() + str.length() <= limit)
+    	            super.insertString(offs, str, a);
+    	    }
+    	});
+    	
+    	year.addActionListener(new ActionListener() {
+	    	public void actionPerformed(ActionEvent e) {
+            	String y = year.getText();
+            	String m = (String)month.getSelectedItem();
+            	String d = (String)month.getSelectedItem();
+            	String request = new String ("SELECT * FROM jos_fb_monthlyDist WHERE Date = \'"+y+"-"+m+"-"+d+"\'");
+            	table.setOpaque(true);
+            	try { 
+	            	model.setQuery(request); 
+	            	//table.setOpaque(true);
+	            }
+	            catch (Exception e1) {
+	            	JOptionPane.showMessageDialog( null, e1.getMessage(), "Database error",JOptionPane.ERROR_MESSAGE );
+			        try {
+			        	 model.setQuery(DEFAULT_QUERY);
+			        }
+			        catch (Exception e2) {
+			        	JOptionPane.showMessageDialog( null, e2.getMessage(),"Database error",JOptionPane.ERROR_MESSAGE );
+			         	model.disconnectFromDatabase();
+			         	System.exit(1);
+			        }
+	            }
+	    	}
+    	});
 
     }
 
