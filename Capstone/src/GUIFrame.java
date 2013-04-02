@@ -381,7 +381,7 @@ public class GUIFrame extends JFrame
 	            String y = year.getText();
 	            String m = (String)month.getSelectedItem();
 	            String d = (String)month.getSelectedItem();
-	            request = new String ("SELECT * FROM jos_fb_monthlyDist WHERE Date = \'"+y+"-"+m+"-"+d+"\'");
+	            request = new String ("SELECT * FROM jos_fb_monthlyDist WHERE theDate = \'"+y+"-"+m+"-"+d+"\'");
 	            table.setOpaque(true);
 	        }
                 else if ( text == "" || option == "" )
@@ -720,7 +720,7 @@ public class GUIFrame extends JFrame
             	String y = year.getText();
             	String m = (String)month.getSelectedItem();
             	String d = (String)month.getSelectedItem();
-            	String request = new String ("SELECT * FROM jos_fb_monthlyDist WHERE Date = \'"+y+"-"+m+"-"+d+"\'");
+            	String request = new String ("SELECT * FROM jos_fb_monthlyDist WHERE theDate = \'"+y+"-"+m+"-"+d+"\'");
             	table.setOpaque(true);
             	try { 
 	            	model.setQuery(request); 
