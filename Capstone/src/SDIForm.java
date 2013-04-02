@@ -22,8 +22,11 @@ import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
 public class SDIForm extends JFrame {
-	Object[] currentInfo;
+	Object[] currentInfo = new Object[21];
 	JPanel panelRow0, panelRow1, panelRow2, panelRow3, panelRow4, panelRow5,
 			panelRow6, panelRow7, panelRow8, panelRow9, panelRow10, panel;
 	JTextField idField, agencyField, firstNameField, lastNameField,
@@ -33,16 +36,27 @@ public class SDIForm extends JFrame {
 	JLabel idLabel, fNameLabel, lNameLabel, addressLabel, apartmentNumberlabel,
 			cityLabel, zipLabel, phoneLabel, numChildrenLabel, numAdultsLabel,
 			numSeniorsLabel, totInHouseholdLabel, qualifierLabel,
-			hhIncomeLabel, offenderLabel;
+			hhIncomeLabel;
 	JCheckBox foodstamps, tanf, ssi, medicaid, weekly, monthly, annually;
-	JButton search, update, populate;
+	JButton search, update, populate, insert;
+	
+	boolean addNew = true;
+	boolean online;
+	Connection connR;
+	Connection connL;
+	queryQue que;
 
-	public SDIForm() {
-		initComponents();
+	public SDIForm(Connection conR, Connection conL, boolean addN, queryQue q, boolean isConnect) {
+	    addNew = addN;
+	    online = isConnect;
+	    initComponents();
 		setTitle("SDI form");
 		setSize(550, 600);
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+		connR = conR;
+		connL = conL;
+		que = q;
 	}
 
 	private void initComponents() {
@@ -63,11 +77,11 @@ public class SDIForm extends JFrame {
 		firstNameField = new JTextField(12);
 		firstNameField.addKeyListener(new KeyAdapter() {
 
-			@Override
-			public void keyPressed(KeyEvent e) {
-				PdfGenerator.autoComplete(firstNameField, "Last_Name");
-			}
-		});
+            @Override
+            public void keyPressed(KeyEvent e) {
+                //PdfGenerator.autoComplete(firstNameField, "Last_Name", conn);
+            }
+        });
 		lastNameField = new JTextField(12);
 		addressField = new JTextField(20);
 		apartmentNumberField = new JTextField(5);
@@ -110,8 +124,68 @@ public class SDIForm extends JFrame {
 
 		// Buttons
 		search = new JButton("Search");
-		update = new JButton("Update Customer");
-		populate = new JButton("Populate SDI Form");
+        update = new JButton("Update Customer");
+        populate = new JButton("Populate SDI Form");
+        insert = new JButton("Insert");
+//Make sure it's working
+        System.out.println("add New: " + addNew);
+		if(!addNew){
+		    System.out.println("Og buttons");
+		    search.setVisible( true );
+		    update.setVisible( true );
+		    populate.setVisible( true );
+		    idField.enable();
+		    insert.setVisible(false);
+		}
+		else{
+		    System.out.println("Insert Button only");
+		    search.setVisible( false );
+            update.setVisible(false );
+            populate.setVisible( false );
+            idField.disable();
+            insert.setVisible(true);
+		}
+		
+		insert.addActionListener(new ActionListener(){
+		   @Override
+		   public void actionPerformed(ActionEvent evt) {
+		       updateCurrentArray();
+
+                   int n = Integer.valueOf( currentInfo[9].toString()) + Integer.valueOf( currentInfo[10].toString()) + Integer.valueOf( currentInfo[11].toString());
+                   try
+                {
+                    FBcustomerRS fbc = new FBcustomerRS(connR, connL, online, currentInfo[2].toString(),currentInfo[3].toString(),currentInfo[4].toString(),currentInfo[5].toString(),currentInfo[6].toString(),
+                           Integer.valueOf( currentInfo[7].toString()), Long.valueOf( currentInfo[8].toString()),
+                           Integer.valueOf( currentInfo[9].toString()),
+                           Integer.valueOf( currentInfo[10].toString()),
+                           Integer.valueOf( currentInfo[11].toString()),
+                           n,
+                           ((Boolean)currentInfo[12]? 1:0),
+                           ( (Boolean)currentInfo[13]? 1:0),
+                           ( (Boolean) currentInfo[14]? 1:0),
+                           ( (Boolean) currentInfo[15]? 1:0),
+                           Integer.valueOf( currentInfo[16].toString()),
+                           ( (Boolean) currentInfo[17]? 1:0),
+                           ( (Boolean) currentInfo[18]? 1:0),
+                           ( (Boolean) currentInfo[19]? 1:0),
+                           ( (Boolean) currentInfo[20]? 1:0));
+                    que.addToQue( fbc.getCreateCustomerQuery());
+                    dispose();
+                }
+                catch ( NumberFormatException e )
+                {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                catch ( SQLException e )
+                {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+               
+               }
+		});
+		
 		search.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				String id = idField.getText();
@@ -122,9 +196,9 @@ public class SDIForm extends JFrame {
 							JOptionPane.INFORMATION_MESSAGE);
 				} else {
 					try {
-						currentInfo = functions.retrieveUser(Integer
-								.parseInt(id));
-						System.out.println("Setting the fields");
+					   
+					        currentInfo = functions.retrieveUser(Integer.parseInt(id), online);
+					        System.out.println("Setting the fields");
 						firstNameField.setText((String) currentInfo[2]);
 						lastNameField.setText((String) currentInfo[3]);
 						addressField.setText((String) currentInfo[4]);
@@ -135,8 +209,7 @@ public class SDIForm extends JFrame {
 						numChildrenField.setText(currentInfo[9].toString());
 						numAdultsField.setText(currentInfo[10].toString());
 						numSeniorsField.setText(currentInfo[11].toString());
-						Integer n = (Integer) currentInfo[9]
-								+ (Integer) currentInfo[10]
+						Integer n = (Integer) currentInfo[9] + (Integer) currentInfo[10]
 								+ (Integer) currentInfo[11];
 						totInHouseholdField.setText(n.toString());
 						foodstamps.setSelected((Boolean) currentInfo[12]);
@@ -147,15 +220,6 @@ public class SDIForm extends JFrame {
 						weekly.setSelected((Boolean) currentInfo[17]);
 						monthly.setSelected((Boolean) currentInfo[18]);
 						annually.setSelected((Boolean) currentInfo[19]);
-						boolean isOffender = (Boolean) currentInfo[20];
-						if(isOffender)
-						{
-							offenderLabel.setVisible(true);
-						}
-						else
-						{
-							offenderLabel.setVisible(false);
-						}
 						// TODO set offender field once created in GUI
 
 					} catch (NoSuchObjectException e) {
@@ -176,17 +240,20 @@ public class SDIForm extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// 0 == yes; 1==no;
-				int n = JOptionPane
-						.showConfirmDialog(
-								null,
-								"Are you sure you would like to update the current customer?",
-								"Customer Update", JOptionPane.YES_NO_OPTION);
-				if (n == 0) {
+				//0 == yes; 1==no;
+				int n = JOptionPane.showConfirmDialog(
+					    null,
+					    "Are you sure you would like to update the current customer?",
+					    "Customer Update",
+					    JOptionPane.YES_NO_OPTION);
+				if(n==0){
 					updateCurrentArray();
+					System.out.println("cust ID: " + (Integer)currentInfo[1]);
 					functions.updateCustomer(
-							Integer.parseInt(currentInfo[1].toString()),
-							currentInfo);
+					    (Integer)currentInfo[1],
+					    currentInfo,
+					    online,
+					    que);
 				}
 			}
 		});
@@ -202,32 +269,31 @@ public class SDIForm extends JFrame {
 							JOptionPane.INFORMATION_MESSAGE);
 				} else {
 					try {
-						currentInfo = functions.retrieveUser(Integer
-								.parseInt(id));
-						System.out.println("Retrieving Agency");
-						Object[] agencyInfo = functions.retrieveAgency(one);
-						System.out.println("Retrieving Agent");
-						Object[] agentInfo = functions.retrieveAgent(one);
-						PdfGenerator.populateSDIForm(currentInfo, agencyInfo,
-								agentInfo);
-					} catch (NoSuchObjectException o) {
+					    
+					        currentInfo = functions.retrieveUser(Integer.parseInt(id), online);
+	                       // System.out.println("Retrieving Agency");
+	                        Object [] agencyInfo = functions.retrieveAgency(one, online);
+	                       // System.out.println("Retrieving Agent");
+	                        Object [] agentInfo = functions.retrieveAgent(one, online);
+					   
+						PdfGenerator.populateSDIForm(currentInfo,agencyInfo,agentInfo);
+					} 
+					catch (NoSuchObjectException o) {
 						// TODO Auto-generated catch block
 						JOptionPane.showMessageDialog(null,
 								"There is no user: \"" + id
 										+ "\" in the database",
 								"Customer Search Error",
 								JOptionPane.INFORMATION_MESSAGE);
-					} catch (NumberFormatException o) {
+					} 
+					catch (NumberFormatException o) {
 						// TODO Auto-generated catch block
 						o.printStackTrace();
 					}
 				}
 			}
 		});
-		
-		offenderLabel = new JLabel();
-		offenderLabel.setText("<html><font color='red'>Offender</font></html>");
-		panelRow0.add(offenderLabel);
+
 		panelRow0.add(idLabel);
 		panelRow0.add(idField);
 		panelRow0.add(search);
@@ -265,6 +331,7 @@ public class SDIForm extends JFrame {
 		panelRow9.add(annually);
 		panelRow10.add(update);
 		panelRow10.add(populate);
+		panelRow10.add(insert);
 
 		panel.add(panelRow0);
 		panel.add(new JSeparator(JSeparator.HORIZONTAL));
@@ -284,28 +351,28 @@ public class SDIForm extends JFrame {
 	}
 
 	protected void updateCurrentArray() {
-		currentInfo[2] = firstNameField.getText();
-		currentInfo[3] = lastNameField.getText();
-		currentInfo[4] = addressField.getText();
-		currentInfo[5] = apartmentNumberField.getText();
-		currentInfo[6] = cityField.getText();
-		currentInfo[7] = zipField.getText();
-		currentInfo[8] = phoneField.getText();
-		currentInfo[9] = numChildrenField.getText();
-		currentInfo[10] = numAdultsField.getText();
-		currentInfo[11] = numSeniorsField.getText();
-		currentInfo[12] = foodstamps.isSelected();
-		currentInfo[13] = tanf.isSelected();
-		currentInfo[14] = ssi.isSelected();
-		currentInfo[15] = medicaid.isSelected();
-		currentInfo[16] = Integer.parseInt(hhIncomeField.getText());
-		currentInfo[17] = weekly.isSelected();
-		currentInfo[18] = monthly.isSelected();
-		currentInfo[19] = annually.isSelected();
-		// TODO offender currentInfo[20]=.getText();
-
+		currentInfo[2]=firstNameField.getText();
+		currentInfo[3]=lastNameField.getText();
+		currentInfo[4]=addressField.getText();
+		currentInfo[5]=apartmentNumberField.getText();
+		currentInfo[6]=cityField.getText();
+		currentInfo[7]=zipField.getText();
+		currentInfo[8]=phoneField.getText();
+		currentInfo[9]=numChildrenField.getText();
+		currentInfo[10]=numAdultsField.getText();
+		currentInfo[11]=numSeniorsField.getText();
+		currentInfo[12]=foodstamps.isSelected();
+		currentInfo[13]=tanf.isSelected();
+		currentInfo[14]=ssi.isSelected();
+		currentInfo[15]=medicaid.isSelected();
+		currentInfo[16]=Integer.parseInt(hhIncomeField.getText());
+		currentInfo[17]=weekly.isSelected();
+		currentInfo[18]=monthly.isSelected();
+		currentInfo[19]=annually.isSelected();
+		currentInfo[20]= false;
+		
 	}
-
+/*
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
@@ -314,5 +381,6 @@ public class SDIForm extends JFrame {
 			}
 		});
 	}
+	*/
 
 }
