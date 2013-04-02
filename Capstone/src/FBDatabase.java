@@ -12,104 +12,68 @@ import java.util.TimerTask;
 public class FBDatabase
 {
 	//Online datebase info and variables
-	private String urlR = "jdbc:mysql://lampa.vf.cnu.edu:3306/";
-	private String dbNameR = "feastdb";
+	private String urlR = "jdbc:mysql://phpmyadmin.37west.com:3306/";
+	private String dbNameR = "com_37west_hrfoodbank";
 	private String driverR = "com.mysql.jdbc.Driver";
-	private String userNameR = "root";
-	private String passwordR = "lampa";
+	private String userNameR = "cnu";
+	private String passwordR = "CnU2401^";
 	public Connection connR = null;
 	private Statement stmtR = null;
 	private ResultSet rsR = null;
 	//Local datebase info and variables
 	private String driverL = "org.sqlite.JDBC";
 	private String urlL = "jdbc:sqlite:";
-	private String dbNameL = "feast.db";
+	private String dbNameL = "com_37west_hrfoodbank.db";
 	public Connection connL = null;
 	private Statement stmtL = null;
 	private PreparedStatement prepL = null;
 	private ResultSet rsL = null;
 	
 	private String directoryPath = "C:/Windows/Temp\\Feast";
-	private String logFileName = "DBUploadedLog.txt";
-	public boolean isConnected = false;
+	boolean isConnected = false;
 	private BufferedWriter output = null;
 	private BufferedReader input = null;
-	private final long CONVERTTOMINUTES = 10000;   //Should be 60000 to be minutes
+	private final long CONVERTTOMINUTES = 10000;
 	private long timerMinutes = 1;
 	private ArrayList<String> queries = new ArrayList<String>();
-
-	public FBDatabase()
-	{
-		canConnect();
-		connect();
-		localConnect();
-		try
-		{
-			updateLocalDataBase();
-		}
-		catch(SQLException e)
-		{
-			e.printStackTrace();
-		}
-	}
+//ADDITION-------------------------
+	static permLog log;
+	static queryQue que;
+	boolean timer = true;
+	Timer t;
+//----------------------
 	
-	public static void main(String[] args)
-	{
-		final FBDatabase database = new FBDatabase();
-		//database.createDirectory();
-	//	database.createConnectionTimer();
-		database.canConnect();
-		database.connect();
-		database.localConnect();
-		try
-		{
-			database.updateLocalDataBase();
-			/*FBCustomer test = new FBCustomer(database.connR, database.connL, database.isConnected, "Miller", "Mason", "1000 University Place" , "-1", "Newport News", 23606, 7033333333L, 0,
-					2, 1, 3, 1, 0, 0, 0, 20000, 0, 0, 1, 0);
-			// Get a statement from the connection
-			String temp = test.getCreateCustomerQuery();
-			System.out.println(test.getCreateCustomerQuery());
-			System.out.println(test.setFirstName("John"));
-			System.out.println(test.setLastName("Nettles"));
-			
-			database.stmtL = database.connL.createStatement();
-			database.stmtL.executeUpdate(temp);
-			database.stmtL.close();
-			
-			System.out.println(test.setNum_Children(4));
-			System.out.println(test.getNum_Children());
-			System.out.println(test.getTotal_Household());*/
-			
-			//FBAgency test = new FBAgency(database.connR, database.connL, database.isConnected, "444", "Test");
-			java.util.Date dt = new java.util.Date();
-			java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			String currentTime = sdf.format(dt);
-			FBMonthlyDistribution test1 = new FBMonthlyDistribution(database.connR, database.connL, database.isConnected, 1, 1, 2, currentTime);
-			//test.setAcctNum("1234");
-			//test.setAgencyName("test3234");
-			System.out.println("<html>Some text <font color='red'>some text in red</font></html>");
-		}
-		catch(SQLException e)
-		{
-			e.printStackTrace();
-		}
-		//database.localPrintNames();
-		database.disconnect();
-		database.localDisconnect();
+	public FBDatabase(){
+	    log = new permLog();
+        que = new queryQue();
+        que.queFileExist();
+        log.LogFileExist();
+//--------------------------------------------      
+        createDirectory();
+        localConnect();
+        createConnectionTimer();
+        canConnect();
 	}
 	
 	public void createConnectionTimer()
 	{
-		Timer t = new Timer();
+	    t = new Timer();
 		t.scheduleAtFixedRate(new TimerTask()
 		{
 			public void run()
 			{
-				System.out.println("Test: " + canConnect());
+			    System.out.println("Timer boolean = " + timer);
+			    if(timer){
+			    System.out.println("Test: " + canConnect());
+			    }
+			    else{
+			        
+			        t.cancel();
+			    }
 			}
 		}, CONVERTTOMINUTES*timerMinutes, CONVERTTOMINUTES*timerMinutes);
 	}
-
+	
 	public boolean canConnect()
 	{
 		isConnected = false;
@@ -119,13 +83,14 @@ public class FBDatabase
 			connR = DriverManager.getConnection(urlR + dbNameR, userNameR, passwordR);
 			stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
 			isConnected = true;
+			System.out.println("should be updated");
 			readIn();
 			updateDataBase();
-			clearQue();
+			updateLocalDataBase();
 		}
 		catch(Exception e)
 		{
-			// e.printStackTrace();
+			 //e.printStackTrace();
 		}
 		return isConnected;
 	}
@@ -133,38 +98,68 @@ public class FBDatabase
 	public void readIn() throws IOException
 	{
 		File dir = new File(directoryPath);
-		File file = new File(dir, logFileName);
+		File file = new File(dir, que.que);
+		file.createNewFile();
 		input = new BufferedReader(new FileReader(file));
-
 		while(input.ready())
 		{
 			String s = input.readLine();
 			queries.add(s);
+			System.out.println(s);
 		}
+		que.clearQue();
 		input.close();
 	}
 
 	public void updateDataBase() throws SQLException
 	{
 		String temp;
+		System.out.println("queries size: " + queries.size());
 		for(int i = 0; i < queries.size(); i++)
 		{
 			temp = queries.get(i);
-			stmtR.executeUpdate(temp);
+			    stmtR = connR.createStatement();
+			    stmtR.execute( temp );
+			    log.logQuery( "Internet Database: " + temp );
 		}
 	}
 	
-	public void updateLocalDataBase() throws SQLException
+	public void createLocalDataBases() 
 	{
-		if(isConnected)
-		{
-			//Updates Customer Table from Online Database
-			Statement stmtL = connL.createStatement();
-			stmtL.executeUpdate("drop table if exists fb_customer;");
-			stmtL.executeUpdate("create table fb_customer (Customer_ID, Last_Name, First_Name, Street_Address, Apartment_Number, City, Zip_Code, Phone_Number, Number_Children, Number_Adults, Number_Seniors, Total_Household, FoodStamps_SNAP, TANF, SSI, Medicaid, HH_Income, Inc_Weekly, Inc_Monthly, Inc_Yearly, Offender);");
-			String sql = "select * from fb_customer";
+	    
+
+        try
+        {
+            Statement stmtL = connL.createStatement();
+            stmtL.executeUpdate("drop table if exists jos_fb_customer;");
+            stmtL.executeUpdate("drop table if exists jos_fb_agency;");
+            stmtL.executeUpdate("drop table if exists jos_fb_monthlydist;");
+            stmtL.executeUpdate("drop table if exists jos_fb_agencyRep;");
+            stmtL.executeUpdate("create table jos_fb_customer (Customer_ID INTEGER PRIMARY KEY AUTOINCREMENT, Last_Name, First_Name, Street_Address, Apartment_Number, City, Zip_Code, Phone_Number, Number_Children, Number_Adults, Number_Seniors, Total_Household, FoodStamps_SNAP, TANF, SSI, Medicaid, HH_Income, Inc_Weekly, Inc_Monthly, Inc_Yearly, Offender);");
+            stmtL.executeUpdate("create table jos_fb_agency (Acct_Num VARCHAR(255) PRIMARY KEY, Agency_Name);");
+            stmtL.executeUpdate("create table jos_fb_agencyRep (AgencyRep_ID INTEGER PRIMARY KEY AUTOINCREMENT, Acct_Num, Rep_LName, Rep_FName, FOREIGN KEY(Acct_Num) REFERENCES jos_fb_agency(Acct_Num));");
+            System.out.println("Before");
+            stmtL.executeUpdate("create table jos_fb_monthlydist (Customer_ID, Acct_Num, AgencyRep_ID, theDate," +
+                    " FOREIGN KEY(Customer_ID) REFERENCES jos_fb_customer(Customer_ID), FOREIGN KEY(Acct_Num) REFERENCES jos_fb_agency(Acct_Num)," +
+                    " FOREIGN KEY(AgencyRep_ID) REFERENCES jos_fb_agencyRep(AgencyRep_ID) PRIMARY KEY(theDate, Acct_Num, Customer_ID));");
+            System.out.println("After");
+        }
+        catch ( SQLException e )
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        //stmtL.executeUpdate("create table jos_fb_que (query_Type, Table_Name, Last_Name, First_Name, Street_Address, Apartment_Number, City, Zip_Code, Phone_Number, Number_Children, Number_Adults, Number_Seniors, Total_Household, FoodStamps_SNAP, TANF, SSI, Medicaid, HH_Income, Inc_Weekly, Inc_Monthly, Inc_Yearly, Offender);");
+        
+	}
+	
+	public void updateLocalDataBase() throws SQLException
+	{		
+	        createLocalDataBases();
+			String sql = "select * from jos_fb_customer";
 			rsR = stmtR.executeQuery(sql);
-			PreparedStatement prepL = connL.prepareStatement("insert into fb_customer values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+			PreparedStatement prepL = connL.prepareStatement("insert into jos_fb_customer values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
 			while(rsR.next())
 			{
 				prepL.setInt(1, rsR.getInt("Customer_ID"));
@@ -191,93 +186,11 @@ public class FBDatabase
 				prepL.addBatch();
 			}
 			connL.setAutoCommit(false);
+			System.out.println(prepL.toString());
 			prepL.executeBatch();
 			connL.setAutoCommit(true);
-			
-			//Updates Agency table from online Database
-			stmtL = connL.createStatement();
-			stmtL.executeUpdate("drop table if exists fb_agency;");
-			stmtL.executeUpdate("create table fb_agency (Agency_ID, Acct_Num, Agency_Name);");
-			sql = "select * from fb_agency";
-			rsR = stmtR.executeQuery(sql);
-			prepL = connL.prepareStatement("insert into fb_agency values (?,?,?);");
-			while(rsR.next())
-			{
-				prepL.setInt(1, rsR.getInt("Agency_ID"));
-				prepL.setString(2, rsR.getString("Acct_Num"));
-				prepL.setString(3, rsR.getString("Agency_Name"));
-				prepL.addBatch();
-			}
-			connL.setAutoCommit(false);
-			prepL.executeBatch();
-			connL.setAutoCommit(true);
-			
-			//Updates AgencyRep table from online Database
-			stmtL = connL.createStatement();
-			stmtL.executeUpdate("drop table if exists fb_agencyRep;");
-			stmtL.executeUpdate("create table fb_agencyRep (AgencyRep_ID, Agency_ID, Rep_LName, Rep_FName);");
-			sql = "select * from fb_agencyRep";
-			rsR = stmtR.executeQuery(sql);
-			prepL = connL.prepareStatement("insert into fb_agencyRep values (?,?,?,?);");
-			while(rsR.next())
-			{
-				prepL.setInt(1, rsR.getInt("AgencyRep_ID"));
-				prepL.setInt(2, rsR.getInt("Agency_ID"));
-				prepL.setString(3, rsR.getString("Rep_LName"));
-				prepL.setString(4, rsR.getString("Rep_FName"));
-				prepL.addBatch();
-			}
-			connL.setAutoCommit(false);
-			prepL.executeBatch();
-			connL.setAutoCommit(true);
-			
-			//Updates MonthlyDistribution table from online Database
-			stmtL = connL.createStatement();
-			stmtL.executeUpdate("drop table if exists fb_monthlyDist;");
-			stmtL.executeUpdate("create table fb_monthlyDist (Distribution_ID, Customer_ID, Agency_ID, AgencyRep_ID, theDate);");
-			sql = "select * from fb_monthlyDist";
-			rsR = stmtR.executeQuery(sql);
-			prepL = connL.prepareStatement("insert into fb_monthlyDist values (?,?,?,?,?);");
-			while(rsR.next())
-			{
-				prepL.setInt(1, rsR.getInt("Distribution_ID"));
-				prepL.setInt(2, rsR.getInt("Customer_ID"));
-				prepL.setString(3, rsR.getString("Agency_ID"));
-				prepL.setString(4, rsR.getString("AgencyRep_ID"));
-				prepL.setString(5, rsR.getString("theDate"));
-				prepL.addBatch();
-			}
-			connL.setAutoCommit(false);
-			prepL.executeBatch();
-			connL.setAutoCommit(true);
-		}
 	}
-	
-	public void clearQue() throws IOException
-    {
-		File dir = new File(directoryPath);
-		File actualFile = new File(dir, logFileName);
-		output = new BufferedWriter(new FileWriter(actualFile,false));
-		output.write("");
-		output.close();
-    }
 
-	public void connect()
-	{
-		if(isConnected)
-		{
-			try
-			{
-				Class.forName(driverR).newInstance();
-				connR = DriverManager.getConnection(urlR + dbNameR, userNameR, passwordR);
-				stmtR = connR.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-			}
-		}
-	}
 	public void disconnect()
 	{
 		if(isConnected)
@@ -299,7 +212,8 @@ public class FBDatabase
 		{
 			Class.forName(driverL);
 			connL = DriverManager.getConnection(urlL + dbNameL);
-			//stmtL = connL.createStatement();
+			stmtL = connL.createStatement();
+			System.out.println("Local Connection: " + connL.toString());
 		}
 		catch(Exception e)
 		{
@@ -317,9 +231,7 @@ public class FBDatabase
 			e.printStackTrace();
 		}
 	}
-	
-	
-	
+
 	public void createDirectory()
 	{
 		File f = new File(directoryPath);
@@ -346,7 +258,7 @@ public class FBDatabase
 		{
 			try
 			{
-				String sql = "select * from fb_customer";
+				String sql = "select * from jos_fb_customer";
 				rsR = stmtR.executeQuery(sql);
 				while(rsR.next())
 				{
@@ -366,7 +278,7 @@ public class FBDatabase
 		try
 		{
 			stmtL = connL.createStatement();
-			ResultSet rsL = stmtL.executeQuery("select * from fb_customer;");
+			ResultSet rsL = stmtL.executeQuery("select * from jos_fb_customer;");
 			while(rsL.next())
 			{
 				System.out.println("ID = " + rsL.getString("Customer_ID"));
@@ -379,106 +291,15 @@ public class FBDatabase
 		}
 	}
 
-	public void addNewCustomer(FBCustomerOld aCustomer)
-	{
-		if(isConnected)
-		{
-			try
-			{
-				/*String sql = "select * from fb_customer";
-				rsR = stmtR.executeQuery(sql);
-				rsR.moveToInsertRow();
-				rsR.updateString("Last_Name", aCustomer.getLastName());
-				rsR.updateString("First_Name", aCustomer.getFirstName());
-				rsR.updateString("Street_Address", aCustomer.getStreetAddress());
-				if(aCustomer.getApartmentNumber() > 0)
-					rsR.updateInt("Apartment_Number", aCustomer.getApartmentNumber());
-				else
-					rsR.updateInt("Apartment_Number", 0);
-				rsR.updateString("City", aCustomer.getCity());
-				rsR.updateInt("Zip_Code", aCustomer.getZipCode());
-				rsR.updateLong("Phone_Number", aCustomer.getPhoneNumber());
-				rsR.updateInt("Number_Children", aCustomer.getNumOfChildren());
-				rsR.updateInt("Number_Adults", aCustomer.getNumOfAdults());
-				rsR.updateInt("Number_Seniors", aCustomer.getNumOfSeniors());
-				rsR.updateInt("Total_Household", aCustomer.getFamilyTotal());
-				rsR.updateInt("FoodStamps_Snap", aCustomer.isQualificationsFoodStamps());
-				rsR.updateInt("TANF", aCustomer.isQualificationsTANF());
-				rsR.updateInt("SSI", aCustomer.isQualificationsSSI());
-				rsR.updateInt("Medicaid", aCustomer.isQualificationsMedicaid());
-				rsR.updateInt("HH_Income", aCustomer.getIncome());
-				rsR.updateInt("Inc_Weekly", aCustomer.isIncomeWeekly());
-				rsR.updateInt("Inc_Monthly", aCustomer.isIncomeMonthly());
-				rsR.updateInt("Inc_Yearly", aCustomer.isIncomeYearly());
-				rsR.updateInt("Offender", aCustomer.isOffender());
-				rsR.insertRow();*/
-				String insertCustQuery = "INSERT INTO fb_customer(Last_Name,First_Name,Street_Address,Apartment_Number,City,"
-						+ "Zip_Code,Phone_Number,Number_Children,Number_Adults,Number_Seniors,Total_Household,FoodStamps_Snap,TANF,SSI,Medicaid,HH_Income,"
-						+ "Inc_Weekly,Inc_Monthly,Inc_Yearly,Offender) VALUES (";
-				String temp = insertCustQuery + "'" + aCustomer.getLastName() + "','" + aCustomer.getFirstName() + "','"
-						+ aCustomer.getStreetAddress() + "','" + aCustomer.getApartmentNumber() + "','"
-						+ aCustomer.getCity() + "','" + aCustomer.getZipCode() + "','"
-						+ aCustomer.getPhoneNumber() + "','" + aCustomer.getNumOfChildren() + "','"
-						+ aCustomer.getNumOfAdults() + "','" + aCustomer.getNumOfSeniors() + "','"
-						+ aCustomer.getFamilyTotal() + "','" + aCustomer.isQualificationsFoodStamps() + "','"
-						+ aCustomer.isQualificationsTANF() + "','"+ aCustomer.isQualificationsSSI() + "','"
-						+ aCustomer.isQualificationsMedicaid() + "','" + aCustomer.getIncome() + "','"
-						+ aCustomer.isIncomeWeekly() + "','" + aCustomer.isIncomeMonthly() + "','"
-						+ aCustomer.isIncomeYearly() + "','" + aCustomer.isOffender() + "');";
-				String sql = temp;
-				stmtR.executeUpdate(sql);
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-			}
-		}
-		else
-		{
-			addNewCustomerDisconnected(aCustomer);
-		}
-	}
 	
-	public void addNewCustomerDisconnected(FBCustomerOld aCustomer)
+	public FBCustomer searchCustomerByID(int customerID)
 	{
-		String insertCustQuery = "INSERT INTO fb_customer(Last_Name,First_Name,Street_Address,Apartment_Number,City,"
-				+ "Zip_Code,Phone_Number,Number_Children,Number_Adults,Number_Seniors,Total_Household,FoodStamps_Snap,TANF,SSI,Medicaid,HH_Income,"
-				+ "Inc_Weekly,Inc_Monthly,Inc_Yearly,Offender) VALUES (";
-		String temp = insertCustQuery + "'" + aCustomer.getLastName() + "','" + aCustomer.getFirstName() + "','"
-				+ aCustomer.getStreetAddress() + "','" + aCustomer.getApartmentNumber() + "','"
-				+ aCustomer.getCity() + "','" + aCustomer.getZipCode() + "','"
-				+ aCustomer.getPhoneNumber() + "','" + aCustomer.getNumOfChildren() + "','"
-				+ aCustomer.getNumOfAdults() + "','" + aCustomer.getNumOfSeniors() + "','"
-				+ aCustomer.getFamilyTotal() + "','" + aCustomer.isQualificationsFoodStamps() + "','"
-				+ aCustomer.isQualificationsTANF() + "','"+ aCustomer.isQualificationsSSI() + "','"
-				+ aCustomer.isQualificationsMedicaid() + "','" + aCustomer.getIncome() + "','"
-				+ aCustomer.isIncomeWeekly() + "','" + aCustomer.isIncomeMonthly() + "','"
-				+ aCustomer.isIncomeYearly() + "','" + aCustomer.isOffender() + "');";
-		String dirName = directoryPath;
-		try
-		{
-			File dir = new File(dirName);
-			File actualFile = new File(dir, logFileName);
-			output = new BufferedWriter(new FileWriter(actualFile,true));
-			output.write(temp);
-			output.newLine();
-			output.close();
-		}
-		catch(Exception e)
-		{
-			System.out.println("Could not create file");
-		}
-		
-	}
-
-	public FBCustomerOld searchCustomerByID(int customerID)
-	{
-		FBCustomerOld costumer = new FBCustomerOld(1, " ", " ");
+		FBCustomer costumer = new FBCustomer(1, " ", " ");
 		if(isConnected)
 		{
 			try
 			{
-				String sql = "SELECT * FROM fb_customer WHERE Customer_ID=" + customerID;
+				String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID=" + customerID;
 				rsR = stmtR.executeQuery(sql);
 				rsR.next();
 				costumer.setCustomerID(rsR.getInt("Customer_ID"));
@@ -510,23 +331,23 @@ public class FBDatabase
 		return costumer;
 	}
 	
-	public FBAgencyOld searchAgencyByID(int agencyID)
+	public FBAgency searchAgencyByID(int agencyID)
 	{
-		FBAgencyOld agency = new FBAgencyOld(0, " ");
+		FBAgency agency = new FBAgency(0, " ");
 		if(isConnected)
 		{
 			try
 			{
-				String sql = "SELECT * FROM fb_agency WHERE Agency_ID=" + agencyID;
+				String sql = "SELECT * FROM jos_fb_agency WHERE Agency_ID=" + agencyID;
 				rsR = stmtR.executeQuery(sql);
 				rsR.next();
 				agency.setAgencyID(rsR.getInt("Agency_ID"));
 				agency.setAccountNum(rsR.getInt("Acct_Num"));
 				agency.setAgencyName(rsR.getString("Agency_Name"));
-				sql = "SELECT * FROM fb_agencyRep WHERE Agency_ID=" + agencyID;
+				sql = "SELECT * FROM jos_fb_agencyRep WHERE Agency_ID=" + agencyID;
 				while(rsR.next())
 				{
-					FBAgencyRepOld agencyRep = new FBAgencyRepOld(0, " ", " ");
+					FBAgencyRep agencyRep = new FBAgencyRep(0, " ", " ");
 					agencyRep.setAgencyRepID(rsR.getInt("AgencyRep_ID"));
 					agencyRep.setAgencyID(rsR.getInt("Agency_ID"));
 					agencyRep.setLastName(rsR.getString("Rep_LName"));
@@ -542,19 +363,14 @@ public class FBDatabase
 		return agency;
 	}
 
-	public void getDBCustomers(int customerID)
-	{
-
-	}
-
-	public void addNewAgency(FBAgencyOld aAgency)
+	public void addNewAgency(FBAgency aAgency)
 	{
 		if(isConnected)
 		{
 			try
 			{
-				ArrayList<FBAgencyRepOld> agencyReps = aAgency.getAgencyReps();
-				String insertAgencyQuery = "INSERT INTO fb_agency(Acct_Num,Agency_Name) VALUES (";
+				ArrayList<FBAgencyRep> agencyReps = aAgency.getAgencyReps();
+				String insertAgencyQuery = "INSERT INTO jos_fb_agency(Acct_Num,Agency_Name) VALUES (";
 				String temp = insertAgencyQuery + "'" + aAgency.getAccountNum() + "','" + aAgency.getAgencyName() + "')";
 				stmtR.executeUpdate(temp, Statement.RETURN_GENERATED_KEYS);
 				rsR = stmtR.getGeneratedKeys();
@@ -566,7 +382,7 @@ public class FBDatabase
 				for(int i=0; i < agencyReps.size(); i++)
 				{
 					agencyReps.get(i).setAgencyID(agencyID);
-					String insertAgencyRepQuery = "INSERT INTO fb_agencyRep(Agency_ID, Rep_LName,Rep_FName) VALUES (";
+					String insertAgencyRepQuery = "INSERT INTO jos_fb_agencyRep(Agency_ID, Rep_LName,Rep_FName) VALUES (";
 					temp = insertAgencyRepQuery + "'" + agencyReps.get(i).getAgencyID() + "','" + agencyReps.get(i).getLastName() + "','"
 							+ agencyReps.get(i).getFirstName() +"')";
 					stmtR.executeUpdate(temp);
@@ -582,22 +398,22 @@ public class FBDatabase
 			addNewAgencyDisconnected(aAgency);
 		}
 	}
-	public void addNewAgencyDisconnected(FBAgencyOld aAgency)
+	public void addNewAgencyDisconnected(FBAgency aAgency)
 	{
 		try
 		{
-			String insertAgencyQuery = "INSERT INTO fb_agency(Acct_Num,Agency_Name) VALUES (";
+			String insertAgencyQuery = "INSERT INTO jos_fb_agency(Acct_Num,Agency_Name) VALUES (";
 			String temp = insertAgencyQuery + "'" + aAgency.getAccountNum() + "','" + aAgency.getAgencyName() + "');";
 			File dir = new File(directoryPath);
-			File actualFile = new File(dir, logFileName);
+			File actualFile = new File(dir, que.que);
 			output = new BufferedWriter(new FileWriter(actualFile,true));
 			output.write(temp);
 			output.newLine();
-			ArrayList<FBAgencyRepOld> agencyReps = aAgency.getAgencyReps();
+			ArrayList<FBAgencyRep> agencyReps = aAgency.getAgencyReps();
 			for(int i=0; i < agencyReps.size(); i++)
 			{
 				agencyReps.get(i).setAgencyID(0);
-				String insertAgencyRepQuery = "INSERT INTO fb_agencyRep(Agency_ID, Rep_LName,Rep_FName) VALUES (";
+				String insertAgencyRepQuery = "INSERT INTO jos_fb_agencyRep(Agency_ID, Rep_LName,Rep_FName) VALUES (";
 				temp = insertAgencyRepQuery + "'" + agencyReps.get(i).getAgencyID() + "','" + agencyReps.get(i).getLastName() + "','"
 						+ agencyReps.get(i).getFirstName() +"');";
 				output.write(temp);
@@ -611,13 +427,13 @@ public class FBDatabase
 		}
 	}
 	
-	public void addNewAgencyRep(FBAgencyRepOld aAgencyRep)
+	public void addNewAgencyRep(FBAgencyRep aAgencyRep)
 	{
 		if(isConnected)
 		{
 			try
 			{
-				String insertAgencyRepQuery = "INSERT INTO fb_agencyRep(Agency_ID, Rep_LName,Rep_FName) VALUES (";
+				String insertAgencyRepQuery = "INSERT INTO jos_fb_agencyRep(Agency_ID, Rep_LName,Rep_FName) VALUES (";
 				String temp = insertAgencyRepQuery + "'" + aAgencyRep.getAgencyID() + "','" + aAgencyRep.getLastName() + "','" + aAgencyRep.getFirstName() + "')";
 				stmtR.executeUpdate(temp);
 			}
@@ -632,14 +448,14 @@ public class FBDatabase
 		}
 	}
 	
-	public void addNewAgencyRepDisconnected(FBAgencyRepOld aAgencyRep)
+	public void addNewAgencyRepDisconnected(FBAgencyRep aAgencyRep)
 	{
 		try
 		{
-			String insertAgencyRepQuery = "INSERT INTO fb_agencyRep(Agency_ID, Rep_LName,Rep_FName) VALUES (";
+			String insertAgencyRepQuery = "INSERT INTO jos_fb_agencyRep(Agency_ID, Rep_LName,Rep_FName) VALUES (";
 			String temp = insertAgencyRepQuery + "'" + aAgencyRep.getAgencyID() + "','" + aAgencyRep.getLastName() + "','" + aAgencyRep.getFirstName() + "');";
 			File dir = new File(directoryPath);
-			File actualFile = new File(dir, logFileName);
+			File actualFile = new File(dir, que.que);
 			output = new BufferedWriter(new FileWriter(actualFile,true));
 			output.write(temp);
 			output.newLine();
@@ -651,13 +467,13 @@ public class FBDatabase
 		}
 	}
 	
-	public void addNewMonthlyDistribution(FBMonthlyDistributionOld aDistribution)
+	public void addNewMonthlyDistribution(FBMonthlyDistribution aDistribution)
 	{
 		if(isConnected)
 		{
 			try
 			{
-				String insertMonthlyDistributionQuery = "INSERT INTO fb_monthlyDist(Customer_ID, Agency_ID,AgencyRep_ID,theDate) VALUES (";
+				String insertMonthlyDistributionQuery = "INSERT INTO jos_fb_monthlyDist(Customer_ID, Agency_ID,AgencyRep_ID,theDate) VALUES (";
 				String temp = insertMonthlyDistributionQuery + "'" + aDistribution.getCustomer().getCustomerID() + "','"
 						+ aDistribution.getAgency().getAgencyID() + "','" + aDistribution.getAgencyRep().getAgencyID() + "','"
 						+ aDistribution.getDate() + "')";
