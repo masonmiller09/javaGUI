@@ -166,14 +166,36 @@ public class GUIFrame extends JFrame
         add( paneBottom, BorderLayout.SOUTH );
         model = new FeastTableModel( connR, connL, online, INITIAL_QUERY );
         table = new JTable( model );
+        {
+	    	public Component prepareRenderer(TableCellRenderer renderer, int row, int column)
+	    	{
+		    	Component c = super.prepareRenderer( renderer, row, column);
+		    	// We want renderer component to be transparent so background image is visible
+		    	if( c instanceof JComponent )
+		    	((JComponent)c).setOpaque(false);
+		    	return c;
+	    	}
+    	};
+    	final ImageIcon image = new ImageIcon( "virginiapeninsulafoodbanktest.jpg" );
+    	table.setOpaque(false);
+    	table.setFont(new Font("Times New Roman", Font.BOLD, 14));
+    	add(new JScrollPane( table ) 
+    	{{
+    		setOpaque(false);
+            getViewport().setOpaque(false);}
+	
+	    	public void paint( Graphics g )
+	    	{
+		    	g.drawImage( image.getImage(), 0, 0, getWidth(), getHeight(),null );
+		    	super.paint(g);
+	    	}
+    	});
         listModel = table.getSelectionModel();
         listModel.setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
         listModel.addListSelectionListener( new SharedListSelectionHandler() );
         table.setSelectionModel( listModel );
         table.setPreferredScrollableViewportSize( table.getPreferredSize() );
         table.setFillsViewportHeight( true );
-        JScrollPane scrollPane = new JScrollPane( table );
-        add( scrollPane );
 
         editF.addActionListener( new ActionListener()
         {
@@ -295,19 +317,23 @@ public class GUIFrame extends JFrame
                 {
                     request = new String( "SELECT * FROM jos_fb_agency WHERE Agency_Name LIKE \'"
                         + text + "%\'" );
+                    table.setOpaque(true);
                 }
                 else if (option == "Customer ID") {
 	            	request = new String ("SELECT * FROM jos_fb_customer WHERE Customer_ID LIKE \'"+ text +"%\'");
+	            	table.setOpaque(true);
 	        }
 	        
                 else if ( text == "" )
                 {
                     request = DEFAULT_QUERY;
+                    table.setOpaque(false);
                 }
                 else
                 {
                     request = new String( "SELECT * FROM jos_fb_customer WHERE First_Name LIKE  \'"
                         + text + "%\' or Last_Name LIKE \'" + text + "%\'" );
+                    table.setOpaque(true);
                 }
                 try
                 {
@@ -345,24 +371,29 @@ public class GUIFrame extends JFrame
                 {
                     request = new String( "SELECT * FROM jos_fb_agency WHERE Agency_Name LIKE \'"
                         + text + "%\'" );
+                    table.setOpaque(true);
                 }
                 else if (option == "Customer ID") {
                     request = new String ("SELECT * FROM jos_fb_customer WHERE Customer_ID LIKE \'"+ text +"%\'");
+                    table.setOpaque(true);
                 }
                 else if (option == "Distribution Date") {
 	            String y = year.getText();
 	            String m = (String)month.getSelectedItem();
 	            String d = (String)month.getSelectedItem();
-	            request = new String ("SELECT * FROM jos_fb_monthlyDist WHERE Date = \'"+y+"-"+m+"-"+d+"\'")
+	            request = new String ("SELECT * FROM jos_fb_monthlyDist WHERE Date = \'"+y+"-"+m+"-"+d+"\'");
+	            table.setOpaque(true);
 	        }
                 else if ( text == "" || option == "" )
                 {
                     request = DEFAULT_QUERY;
+                    table.setOpaque(false);
                 }
                 else
                 {
                     request = new String( "SELECT * FROM jos_fb_customer WHERE First_Name LIKE  \'"
                         + text + "%\' or Last_Name LIKE \'" + text + "%\'" );
+                    table.setOpaque(true);
                 }
                 try
                 {
