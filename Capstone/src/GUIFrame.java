@@ -380,7 +380,7 @@ public class GUIFrame extends JFrame
                 else if (option == "Distribution Date") {
 	            String y = year.getText();
 	            String m = (String)month.getSelectedItem();
-	            String d = (String)month.getSelectedItem();
+	            String d = (String)day.getSelectedItem();
 	            request = new String ("SELECT * FROM jos_fb_monthlyDist WHERE theDate = \'"+y+"-"+m+"-"+d+"\'");
 	            table.setOpaque(true);
 	        }
@@ -691,15 +691,15 @@ public class GUIFrame extends JFrame
 	    	}
 	    	else {
 	    		panel.removeAll();
-	    	panel.add(searchLabel,BorderLayout.EAST);
-	    	panel.add(searchOptions,BorderLayout.EAST);
-	    	panel.add(monthLabel,BorderLayout.EAST);
-	    	panel.add(month,BorderLayout.EAST);
-	    	panel.add(dayLabel,BorderLayout.EAST);
+	    		panel.add(searchLabel,BorderLayout.EAST);
+	    		panel.add(searchOptions,BorderLayout.EAST);
+	    		panel.add(monthLabel,BorderLayout.EAST);
+	    		panel.add(month,BorderLayout.EAST);
+	    		panel.add(dayLabel,BorderLayout.EAST);
 			panel.add(day,BorderLayout.EAST);
 			panel.add(yearLabel,BorderLayout.EAST);
 			panel.add(year,BorderLayout.EAST);
-		panel.add(searchButton,BorderLayout.EAST);
+			panel.add(searchButton,BorderLayout.EAST);
 			revalidate();
 	    	}
 	    	prevMonth = m;
@@ -719,7 +719,7 @@ public class GUIFrame extends JFrame
 	    	public void actionPerformed(ActionEvent e) {
             	String y = year.getText();
             	String m = (String)month.getSelectedItem();
-            	String d = (String)month.getSelectedItem();
+            	String d = (String)day.getSelectedItem();
             	String request = new String ("SELECT * FROM jos_fb_monthlyDist WHERE theDate = \'"+y+"-"+m+"-"+d+"\'");
             	table.setOpaque(true);
             	try { 
