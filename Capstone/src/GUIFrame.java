@@ -618,7 +618,7 @@ public class GUIFrame extends JFrame
             }
         } );
 
-        distributionButton.addActionListener( new ActionListener()
+        addDistributionButton.addActionListener( new ActionListener()
         {
             @Override
             public void actionPerformed( ActionEvent e )
