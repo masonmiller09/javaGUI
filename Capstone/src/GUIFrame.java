@@ -1,5 +1,6 @@
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -51,17 +52,17 @@ import javax.swing.text.AttributeSet;
 
 public class GUIFrame extends JFrame
 {
-    private JPanel panel, paneTop, paneBottom;
+    private JPanel panel, paneTop, paneBottom, advancedPanel;
 
-    private JTextField searchBox, year;
+    private JTextField searchBox, advancedSearchBox, year, advancedYear;
 
-    private JLabel searchLabel,monthLabel,dayLabel,yearLabel;
+    private JLabel searchLabel,monthLabel1,monthLabel2,dayLabel1,dayLabel2,yearLabel1,yearLabel2,agencyLabel,dateLabel,customerLabel;
 
     private StatusBar statusBar;
 
-    private JComboBox<String> searchOptions, month, day;
+    private JComboBox<String> searchOptions, month, advancedMonth, day, advancedDay, agencyBox;
 
-    private JButton searchButton, viewButton, reportButton, distributionButton;
+    private JButton searchButton,searchButton2,viewButton,printButton,addCustomerButton,addDistributionButton,advancedSearchButton;
 
     private JTable table;
 
@@ -72,6 +73,16 @@ public class GUIFrame extends JFrame
     private String[] cbList = { "", "Agency", "Customer", "Customer ID", "Distribution Date" };
     
     private String[] monthList = {"","01","02","03","04","05","06","07","08","09","10","11","12"};
+
+    private String[] agencyOptions = {"","Agape Cathedral Center","An Acheivable Dream","Andrews Elementary","Beauty for Ashes","Behind the Veil Ministry","Berachah Church","Berkley Village Apartments","Bethel Temple","Booker Elementary","Bread for Life","Buckroe Baptist Church",
+    									"C.H.P. Lafayette Village","C.H.P. Rivermede","C.H.P. Woods @ Yorktown", "Cary Elementary","Checed Warwick","Christ Temple Holiness Church","Coastal Community Church","Deeper Life Assembly","Doris Miller Center","Dunamis Christian Center",
+    									"Emmanuel House Inc.","Empowered Believers Christian","First Baptist - Jefferson Park","First Baptist Denbigh","Five Loaves","Forrest Elementary","Garden of Prayer","Gleaning Baptist Church","Greater Bethlehem Christ. As.","Greater Emmanuel Ministries",
+    									"Greater Works Ministries","Grove Christian Outreach","Holy Tabernacle Church","Hope House Ministries","Ivy Baptist Church","Ivy Farms Church","JTC Lifechanging Center Inc.","Just-Us-Kidz Inc.","Langley Elementary","Langley Village","Lexington Commons",
+    									"Lifeline Full Gospel","Living Faith Christian Center","Living Waters Family Outreach","Living Waters Way of the Cross","Magruder Elementary","Mercy Seat Bapt.","Mt. Calvary SDA Church","Mt. Calvary Baptist","New Beginnings","New Bethel International",
+    									"New Hope Baptist Church","New Life Ministry Center","Newport News Housing","Oasis of Life","Open Door Full Gospel","Operation Breaking Through","Peninsula Hispanic SDA","Perfecting Saints Ministries","Pinecroft","Pocahontas Temple","Poquoson",
+    									"Salem UMC","Salvation Army (Hampton)","Salvation Army (Williamsburg)","Seton Manor","Smith Elementary","Spirit of Truth Ministries","Sr. Christian Village of E. VA.","St. James Deliverance","St. John Baptist Church","St. Marks UMC","St. Timothy Church",
+    									"Surry Community Center 1","Tarrant Elementary","Temple of Life / New Life","Temple of Peace","Temple of Refuge","Triumph Christian Center","Tyler Elementary","W.M. Ratley Road Ahead","Warwick Assembly of God","White Marsh Baptist Church",
+    									"Williamsburg/Blayton Building","Williamsburg/Burnt Ordinary","Williamsburg/Katherine Circle","Williamsburg/Mimosa Woods","Williamsburg/Sylvia Brown","World Outreach Worship Center","YWCA","Zion Prospect Baptist Church"};
 
     int population = 0;
 
@@ -105,7 +116,9 @@ public class GUIFrame extends JFrame
 
     static final String FULL_DATA_QUERY = "SELECT * FROM jos_fb_customer;";
     
-    private String previous,prevMonth;
+    private String previous,prevMonth,advancedPrevMonth;
+
+    private Boolean advanced = false;
 
 
     public GUIFrame()
@@ -143,13 +156,31 @@ public class GUIFrame extends JFrame
         searchBox = new JTextField( 10 );
         searchButton = new JButton( "Search" );
         searchLabel = new JLabel( "Search by: " );
+	monthLabel1 = new JLabel("M");
+	monthLabel2 = new JLabel("M");
+	dayLabel1 = new JLabel("D");
+	dayLabel2 = new JLabel("D");
+	yearLabel1 = new JLabel("Year(YYYY)");
+	yearLabel2 = new JLabel("Year(YYYY)");
         searchOptions = new JComboBox( cbList );
 	month = new JComboBox(monthList);
+	advancedMonth = new JComboBox(monthList);
 	year = new JTextField(4);
+    	advancedYear = new JTextField(4);
     	final int limit = 4;
+	agencyLabel = new JLabel("Select an Agency: ");
+	agencyBox = new JComboBox(agencyOptions);
+	dateLabel = new JLabel("Enter Date: ");
+	customerLabel = new JLabel("Enter Customer: ");
+	advancedSearchBox = new JTextField(12);
+	searchButton2 = new JButton("Search");
+	advancedPanel = new JPanel();
+	advancedPanel.setPreferredSize(new Dimension(getWidth(),60));
+    	advancedSearchButton = new JButton("Advanced Search");
         panel.add( searchLabel, BorderLayout.EAST );
         panel.add( searchOptions, BorderLayout.EAST );
-        paneTop.add( panel, BorderLayout.EAST );
+	panel.add(advancedSearchButton,BorderLayout.EAST);
+        paneTop.add( panel );
         paneBottom = new JPanel();
         paneBottom.setLayout( new BorderLayout() );
         statusBar = new StatusBar( connR, connL );
@@ -157,12 +188,14 @@ public class GUIFrame extends JFrame
         JPanel paneBottomBody = new JPanel();
         paneBottom.add( paneBottomBody, BorderLayout.NORTH );
         paneBottom.add( new JSeparator( SwingConstants.HORIZONTAL ) );
-        viewButton = new JButton( "View" );
-        reportButton = new JButton( "Report" );
-        distributionButton = new JButton( "Distributions" );
+        viewButton = new JButton( "View Selected Customers" );
+        printButton = new JButton("Print Selected Customers");
+        addDistributionButton = new JButton("Add Distributions");
+	addCustomerButton = new JButton("Add New Customer");
+	paneBottomBody.add(addCustomerButton);
         paneBottomBody.add( viewButton );
-        paneBottomBody.add( reportButton );
-        paneBottomBody.add( distributionButton );
+        paneBottomBody.add( printButton );
+        paneBottomBody.add( addDistributionButton );
         add( paneBottom, BorderLayout.SOUTH );
         model = new FeastTableModel( connR, connL, online, INITIAL_QUERY );
         table = new JTable( model );
@@ -386,7 +419,7 @@ public class GUIFrame extends JFrame
 	        }
                 else if ( text == "" || option == "" )
                 {
-                    request = DEFAULT_QUERY;
+                    request = INITIAL_QUERY;
                     table.setOpaque(false);
                 }
                 else
@@ -498,7 +531,7 @@ public class GUIFrame extends JFrame
             }
         } );
 
-        reportButton.addActionListener( new ActionListener()
+        printButton.addActionListener( new ActionListener()
         {
             @Override
             public void actionPerformed( ActionEvent e )
@@ -613,9 +646,11 @@ public class GUIFrame extends JFrame
 	            String option = (String)searchOptions.getSelectedItem();
 	            if (option == "Customer" || option == "Customer ID" || option == "Agency") {
 	            	if (previous == null) {
+				panel.remove(advancedSearchButton);
 		            	panel.add(searchBox, BorderLayout.EAST);
 		            	panel.add(searchButton,BorderLayout.EAST);
 		            	searchBox.setFont(new Font("Verdana",Font.PLAIN,12));
+	                	panel.add(advancedSearchButton,BorderLayout.EAST);
 		            	revalidate();
 	            	}
 	            	else if (previous == "Distribution Date"){
@@ -624,6 +659,7 @@ public class GUIFrame extends JFrame
 	            		panel.add(searchOptions,BorderLayout.EAST);
 	            		panel.add(searchBox,BorderLayout.EAST);
 	            		panel.add(searchButton,BorderLayout.EAST);
+	                	panel.add(advancedSearchButton,BorderLayout.EAST);
 	            		revalidate();
 	            	}
 	            	else {
@@ -632,22 +668,25 @@ public class GUIFrame extends JFrame
 	            }
 	            else if (option == "Distribution Date") {
 	            	if (previous == null) {
-		            	panel.add(monthLabel,BorderLayout.EAST);
+				panel.remove(advancedSearchButton);
+		            	panel.add(monthLabel1,BorderLayout.EAST);
 		            	panel.add(month,BorderLayout.EAST);
-		            	panel.add(yearLabel,BorderLayout.EAST);
+		            	panel.add(yearLabel1,BorderLayout.EAST);
 		            	panel.add(year, BorderLayout.EAST);
 		            	panel.add(searchButton,BorderLayout.EAST);
+	                	panel.add(advancedSearchButton,BorderLayout.EAST);
 		            	revalidate();
 	            	}
 	            	else if (previous == "Customer" || previous == "Customer ID" || previous == "Agency") {
 		            	panel.removeAll();
 		            	panel.add(searchLabel,BorderLayout.EAST);
 		            	panel.add(searchOptions,BorderLayout.EAST);
-		            	panel.add(monthLabel,BorderLayout.EAST);
+		            	panel.add(monthLabel1,BorderLayout.EAST);
 		            	panel.add(month,BorderLayout.EAST);
-		            	panel.add(yearLabel,BorderLayout.EAST);
+		            	panel.add(yearLabel1,BorderLayout.EAST);
 		            	panel.add(year, BorderLayout.EAST);
 		            	panel.add(searchButton,BorderLayout.EAST);
+	                	panel.add(advancedSearchButton,BorderLayout.EAST);
 		            	revalidate();
 	            	}
 	            	else {
@@ -679,33 +718,88 @@ public class GUIFrame extends JFrame
 	    	}
 	    	day = new JComboBox(days);
 	    	if (prevMonth == null) {
-			panel.remove(yearLabel);
+			panel.remove(yearLabel1);
 			panel.remove(year);
 			panel.remove(searchButton);
-			panel.add(dayLabel,BorderLayout.EAST);
+			panel.remove(advancedSearchButton);
+			panel.add(dayLabel1,BorderLayout.EAST);
 			panel.add(day,BorderLayout.EAST);
-			panel.add(yearLabel,BorderLayout.EAST);
+			panel.add(yearLabel1,BorderLayout.EAST);
 			panel.add(year,BorderLayout.EAST);
-		panel.add(searchButton,BorderLayout.EAST);
+			panel.add(searchButton,BorderLayout.EAST);
+	                panel.add(advancedSearchButton,BorderLayout.EAST);
 			revalidate();
 	    	}
 	    	else {
 	    		panel.removeAll();
 	    		panel.add(searchLabel,BorderLayout.EAST);
 	    		panel.add(searchOptions,BorderLayout.EAST);
-	    		panel.add(monthLabel,BorderLayout.EAST);
+	    		panel.add(monthLabel1,BorderLayout.EAST);
 	    		panel.add(month,BorderLayout.EAST);
-	    		panel.add(dayLabel,BorderLayout.EAST);
+	    		panel.add(dayLabel1,BorderLayout.EAST);
 			panel.add(day,BorderLayout.EAST);
-			panel.add(yearLabel,BorderLayout.EAST);
+			panel.add(yearLabel1,BorderLayout.EAST);
 			panel.add(year,BorderLayout.EAST);
 			panel.add(searchButton,BorderLayout.EAST);
+	                panel.add(advancedSearchButton,BorderLayout.EAST);
 			revalidate();
 	    	}
 	    	prevMonth = m;
 	    }
     	});
     	
+	advancedMonth.addActionListener(new ActionListener () {
+	    public void actionPerformed(ActionEvent l) {
+		String m = (String)advancedMonth.getSelectedItem();
+		String[] days;
+		if (m == "02") {
+			String[] dayList = {"","01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29"};
+			days = dayList;
+		}
+		else if (m == "04" || m == "06" || m == "09" || m == "11") {
+			String[] dayList = {"","01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30"};
+			days = dayList;
+		}
+		else {
+			String[] dayList = {"","01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31"};
+			days = dayList;
+		}
+		advancedDay = new JComboBox(days);
+			if (advancedPrevMonth == null) {
+			advancedPanel.remove(yearLabel2);
+			advancedPanel.remove(year);
+			advancedPanel.remove(customerLabel);
+			advancedPanel.remove(advancedSearchBox);
+			advancedPanel.remove(searchButton2);
+			advancedPanel.remove(advancedSearchButton);
+			advancedPanel.add(dayLabel2,BorderLayout.EAST);
+			advancedPanel.add(advancedDay,BorderLayout.EAST);
+			advancedPanel.add(yearLabel2,BorderLayout.EAST);
+			advancedPanel.add(advancedYear,BorderLayout.EAST);
+			advancedPanel.add(customerLabel,BorderLayout.EAST);
+			advancedPanel.add(advancedSearchBox,BorderLayout.EAST);
+			advancedPanel.add(searchButton2,BorderLayout.EAST);
+			revalidate();
+		}
+		else {
+			advancedPanel.removeAll();
+			advancedPanel.add(agencyLabel,BorderLayout.EAST);
+			advancedPanel.add(agencyBox,BorderLayout.EAST);
+			advancedPanel.add(dateLabel,BorderLayout.EAST);
+			advancedPanel.add(monthLabel2,BorderLayout.EAST);
+			advancedPanel.add(advancedMonth,BorderLayout.EAST);
+			advancedPanel.add(dayLabel2,BorderLayout.EAST);
+			advancedPanel.add(advancedDay,BorderLayout.EAST);
+			advancedPanel.add(yearLabel2,BorderLayout.EAST);
+			advancedPanel.add(advancedYear,BorderLayout.EAST);
+			advancedPanel.add(customerLabel,BorderLayout.EAST);
+			advancedPanel.add(advancedSearchBox,BorderLayout.EAST);
+			advancedPanel.add(searchButton2,BorderLayout.EAST);
+			revalidate();
+		}
+		advancedPrevMonth = m;
+	    }
+    	});
     	year.setDocument(new PlainDocument(){
     	    @Override
     	    public void insertString(int offs, String str, AttributeSet a)
@@ -739,6 +833,69 @@ public class GUIFrame extends JFrame
 	            }
 	    	}
     	});
+
+	advancedYear.setDocument(new PlainDocument(){
+    	    @Override
+    	    public void insertString(int offs, String str, AttributeSet a)
+    	            throws BadLocationException {
+    	        if(getLength() + str.length() <= limit)
+    	            super.insertString(offs, str, a);
+    	    }
+    	});
+    	advancedYear.addActionListener(new ActionListener() {
+	    	public void actionPerformed(ActionEvent e) {
+            	String y = advancedYear.getText();
+            	String m = (String)advancedMonth.getSelectedItem();
+            	String d = (String)advancedDay.getSelectedItem();
+            	String request = new String ("SELECT * FROM jos_fb_monthlyDist WHERE theDate = \'"+y+"-"+m+"-"+d+"\'");
+            	table.setOpaque(true);
+            	try { 
+	            	model.setQuery(request); 
+	            	//table.setOpaque(true);
+	            }
+	            catch (Exception e1) {
+	            	JOptionPane.showMessageDialog( null, e1.getMessage(), "Database error",JOptionPane.ERROR_MESSAGE );
+			        try {
+			        	 model.setQuery(DEFAULT_QUERY);
+			        }
+			        catch (Exception e2) {
+			        	JOptionPane.showMessageDialog( null, e2.getMessage(),"Database error",JOptionPane.ERROR_MESSAGE );
+			         	model.disconnectFromDatabase();
+			         	System.exit(1);
+			        }
+	            }
+	    	}
+    	});
+	
+	advancedSearchButton.addActionListener(new ActionListener() {
+	    	@Override
+	    	public void actionPerformed(ActionEvent e) {
+	    		if (!advanced) {
+	    			advanced = true;
+	    			advancedPanel.add(agencyLabel,BorderLayout.EAST);
+	    			advancedPanel.add(agencyBox,BorderLayout.EAST);
+	    			advancedPanel.add(dateLabel,BorderLayout.EAST);
+	    			advancedPanel.add(monthLabel2,BorderLayout.EAST);
+	    			advancedPanel.add(advancedMonth,BorderLayout.EAST);
+	    			advancedPanel.add(yearLabel2,BorderLayout.EAST);
+	    			advancedPanel.add(advancedYear,BorderLayout.EAST);
+	    			advancedPanel.add(customerLabel,BorderLayout.EAST);
+	    			advancedPanel.add(advancedSearchBox,BorderLayout.EAST);
+	    			advancedPanel.add(searchButton2,BorderLayout.EAST);
+		    		paneTop.setPreferredSize(new Dimension (getWidth(), 80));
+		    		paneTop.add(new JSeparator(JSeparator.HORIZONTAL));
+		    		paneTop.add(advancedPanel);
+		    		revalidate();
+	    		}
+	    		else {
+	    			advanced = false;
+	    			paneTop.remove(advancedPanel);
+	    			advancedPanel.removeAll();
+	    			paneTop.setPreferredSize(new Dimension(getWidth(), 45));
+	    			revalidate();
+	    		}
+	    	}
+	    });
 
     }
 
