@@ -46,7 +46,7 @@ public class PdfGenerator
         Object[] agentInfo )
     {
         String pdfTemplate = "Editable_SDI_Form.pdf";
-        String newFile = "populated_SDI_Form.pdf";
+        String newFile = "C:\\Windows\\Temp\\Feast\\populated_SDI_Form.pdf";
         PdfReader pdfReader;
         try
         {
@@ -54,9 +54,9 @@ public class PdfGenerator
             PdfStamper pdfStamper = new PdfStamper( pdfReader,
                 new FileOutputStream( newFile ) );
             AcroFields pdfFormFields = pdfStamper.getAcroFields();
-            pdfFormFields.setField( "Agency_Name", agencyInfo[3].toString() );
-            pdfFormFields.setField( "Account_Number", agencyInfo[2].toString() );
-            pdfFormFields.setField( "Agency_Rep", agentInfo[4] + " "
+            pdfFormFields.setField( "Agency_Name", agencyInfo[2].toString() );
+            pdfFormFields.setField( "Account_Number", agencyInfo[1].toString() );
+            pdfFormFields.setField( "Agency_Rep", agentInfo[3] + " "
                 + agentInfo[3] );
             pdfFormFields.setField( "Applicant_Name", customerInfo[3] + " "
                 + customerInfo[2] );
@@ -151,7 +151,7 @@ public class PdfGenerator
         int population )
     {
         String pdfTemplate = "Editable_SDI_Form.pdf";
-        String newFile = "populated_SDI_Form_" + population + ".pdf";
+        String newFile = "C:\\Windows\\Temp\\Feast\\populated_SDI_Form_" + population + ".pdf";
         PdfReader pdfReader;
         try
         {
@@ -159,8 +159,8 @@ public class PdfGenerator
             PdfStamper pdfStamper = new PdfStamper( pdfReader,
                 new FileOutputStream( newFile ) );
             AcroFields pdfFormFields = pdfStamper.getAcroFields();
-            pdfFormFields.setField( "Agency_Name", agencyInfo[3].toString() );
-            pdfFormFields.setField( "Account_Number", agencyInfo[2].toString() );
+            pdfFormFields.setField( "Agency_Name", agencyInfo[2].toString() );
+            pdfFormFields.setField( "Account_Number", agencyInfo[1].toString() );
             pdfFormFields.setField( "Agency_Rep", agentInfo[4] + " "
                 + agentInfo[3] );
             pdfFormFields.setField( "Applicant_Name", customerInfo[3] + " "
@@ -247,17 +247,18 @@ public class PdfGenerator
             e.printStackTrace();
         }
     }
-	
+
 	public static void mergePdfFiles(int population) {
 		List<InputStream> list = new ArrayList<InputStream>();
 		try {
             // Source pdfs
-			for (int i = 0; i < population; i++) {
-	            list.add(new FileInputStream(new File("populated_SDI_Form_"+i+".pdf")));
+			while(population > 0) {
+	            list.add(new FileInputStream(new File("C:\\Windows\\Temp\\Feast\\populated_SDI_Form_" + (population-1) + ".pdf")));
+	            population--;
 			}
 			System.out.println("List size: "+list.size()+" Population: "+population);
             // Resulting pdf
-            OutputStream out = new FileOutputStream(new File("result.pdf"));
+            OutputStream out = new FileOutputStream(new File("C:\\Windows\\Temp\\Feast\\result.pdf"));
 
             doMerge(list, out);
 
@@ -267,13 +268,13 @@ public class PdfGenerator
             e.printStackTrace();
         }
 	}
-	
+
 	private static void doMerge(List<InputStream> list, OutputStream out) {
-		
+
 		try {
 			Document document = null;
 	        PdfCopy writer = null;
-	       
+
 	        for (InputStream in : list) {
 	            PdfReader reader = new PdfReader(in);
 	            if (in == list.get(0)) {
@@ -293,7 +294,7 @@ public class PdfGenerator
 	            writer.copyAcroForm(reader);
 	            in.close();
 	        }
-	        File pdfFile = new File("result.pdf");
+	        File pdfFile = new File("C:\\Windows\\Temp\\Feast\\result.pdf");
             if (Desktop.isDesktopSupported()) {
 				Desktop.getDesktop().open(pdfFile);
 			} else {
