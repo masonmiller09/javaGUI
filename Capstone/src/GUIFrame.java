@@ -822,7 +822,6 @@ public class GUIFrame extends JFrame
 			        }
 			        catch (Exception e2) {
 			        	JOptionPane.showMessageDialog( null, e2.getMessage(),"Database error",JOptionPane.ERROR_MESSAGE );
-			         	model.disconnectFromDatabase();
 			         	System.exit(1);
 			        }
 	            }
@@ -855,7 +854,6 @@ public class GUIFrame extends JFrame
 			        }
 			        catch (Exception e2) {
 			        	JOptionPane.showMessageDialog( null, e2.getMessage(),"Database error",JOptionPane.ERROR_MESSAGE );
-			         	model.disconnectFromDatabase();
 			         	System.exit(1);
 			        }
 	            }
