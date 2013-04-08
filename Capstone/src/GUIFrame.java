@@ -122,7 +122,7 @@ public class GUIFrame extends JFrame
         super( "FEAST" );
         paneTop = new JPanel();
         add( paneTop, BorderLayout.NORTH );
-        setSize( 1500, 700 );
+        setSize( 1480,930 );
         JMenuBar main = new JMenuBar();
         setJMenuBar( main );
         JMenu file = new JMenu( "File" );
