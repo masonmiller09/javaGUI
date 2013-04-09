@@ -19,9 +19,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Vector;
+import java.util.ArrayList;
 
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -32,17 +32,18 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-import javax.swing.border.Border;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
+import javax.swing.WindowConstants;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableModel;
 
 
-public class GUIFrameMatt extends JFrame
+public class GUIFrame extends JFrame
 {
     private JPanel panel, paneTop, paneBottom;
 
@@ -50,64 +51,69 @@ public class GUIFrameMatt extends JFrame
 
     private JLabel searchLabel;
 
+    private static StatusBar statusBar;
+
     private JComboBox<String> searchOptions;
 
-    private JButton searchButton, viewButton, reportButton;
+    private JButton searchButton, viewButton, reportButton, distributionButton;
 
     private JTable table;
 
-    private Vector data, row, fulldata;
-
-    private String[] test = new String[3];
-
-    private Vector<String> columns, fullcolumns;
+    private ArrayList<Integer> selected;
 
     private Object[] currentInfo;
 
-    private String[] cbList = { "", "Agency", "First_Name", "Last_Name",
-        "Zipcode" };
+    private String[] cbList = { "", "Agency", "Customer", "Agent", "Zip_Code" };
 
-    public static Connection conn = null;
-    
-   // public static Connection connL = null;
+    int population = 0;
+
+    public static boolean online;
+
+    public static Connection connL = null;
+
+    public static Connection connR = null;
 
     public Statement stmt = null;
 
     public ResultSet result = null;
 
-    int population = 0;
+    private int numberOfRows;
 
-    static String url = "jdbc:mysql://lampa.vf.cnu.edu:3306/";
+    private FeastTableModel model;
 
-    static String dbName = "feastdb";
-
-    private static String driverL = "org.sqlite.JDBC";
-
-    private static String urlL = "jdbc:sqlite:";
-
-    private static String dbNameL = "feast.db";
-
-    static String driver = "com.mysql.jdbc.Driver";
-
-    static String userName = "root";
-
-    static String password = "lampa";
+    private ListSelectionModel listModel;
 
     String searching = "";
-
-    private int num = 0;
 
     static FBDatabase fbd;
 
     static functions f;
-    
-    static SampleTableModel model;
+
+    static final String DEFAULT_QUERY = "SELECT Customer_ID, Last_Name, First_Name, Street_Address, Apartment_Number, City, Zip_Code, Phone_Number FROM jos_fb_customer ORDER BY Customer_ID;";
+
+    static final String SIZE_DATABASE_QUERY = "SELECT COUNT(Customer_ID) FROM jos_fb_customer;";
+
+    static final String FULL_DATA_QUERY = "SELECT * FROM jos_fb_customer ORDER BY Customer_ID;";
 
 
-    public GUIFrameMatt()
+    public GUIFrame()
     {
 
         super( "FEAST" );
+
+        // ------------Testing moving the main
+        // method-----------------------------------
+
+        fbd = new FBDatabase();
+        connR = fbd.connR;
+        connL = fbd.connL;
+        online = fbd.isConnected;
+        statusBar = fbd.sBar;
+        // setLocationRelativeTo( null );
+        // setVisible( true );
+
+        // ----------------------------------------------
+
         paneTop = new JPanel();
         add( paneTop, BorderLayout.NORTH );
         setSize( 1500, 700 );
@@ -116,71 +122,10 @@ public class GUIFrameMatt extends JFrame
         JMenu file = new JMenu( "File" );
         file.enable( true );
         JMenuItem insert = file.add( "Insert" );
-        JMenuItem delete = file.add( "Delete" );
+        // JMenuItem delete = file.add( "Delete" );
         JMenuItem print = file.add( "Printable DB" );
-        f = new functions();
-        
-        insert.addActionListener( new ActionListener()
-        {
-           @Override
-           public void actionPerformed( ActionEvent arg0)
-           {
-               System.out.println("Insert Attempted");
-               SDIForm sdi = new SDIForm(conn, true);
-               sdi.setVisible( true );
-           }
-        });
-        
-        print.addActionListener( new ActionListener()
-        {
-            @Override
-            public void actionPerformed( ActionEvent arg0 )
-            {
-                JFileChooser jfc = new JFileChooser();
-                jfc.setFileSelectionMode( 1 );
-                jfc.setApproveButtonText( "Directory..." );
-                String directory = "";
-                jfc.showDialog( searchBox, null );
-                directory = jfc.getSelectedFile().getAbsolutePath();
-                //f.printableDB( conn, directory, data );
-            }
-        } );
-
-        delete.addActionListener( new ActionListener()
-        {
-            @Override
-            public void actionPerformed( ActionEvent arg0 )
-            {
-                for ( int i = 0; i < data.size(); i++ )
-                {
-                    row = (Vector)data.get( i );
-                    if ( (Boolean)row.get( 0 ) )
-                    {
-                        f.delete( conn, (Integer)row.get( 1 ), fbd.que );
-                        model.refresh();
-
-                    }
-                }
-            }
-        } );
-
+        f = new functions( connR, connL );
         JMenuItem exit = file.add( "Exit" );
-        exit.addActionListener( new ActionListener()
-        {
-            @Override
-            public void actionPerformed( ActionEvent arg0 )
-            {
-                int result = displayExitDialog();
-                if ( result == JOptionPane.YES_OPTION )
-                {
-                    System.out.println("Exit attempted");
-                    fbd.timer = false;
-                    System.out.println("guiframe timer: " + fbd.timer);
-                    dispose();
-                    
-                }
-            }
-        } );
         JMenu edit = new JMenu( "Edit" );
         edit.enable( true );
         JMenuItem editF = edit.add( "Edit" );
@@ -194,6 +139,118 @@ public class GUIFrameMatt extends JFrame
         main.add( file );
         main.add( edit );
         main.add( view );
+        setDefaultCloseOperation( WindowConstants.DO_NOTHING_ON_CLOSE );
+        panel = new JPanel();
+        panel.setLayout( new FlowLayout( FlowLayout.RIGHT ) );
+        searchBox = new JTextField( 10 );
+        searchButton = new JButton( "Search" );
+        searchLabel = new JLabel( "Search by: " );
+        searchOptions = new JComboBox( cbList );
+        panel.add( searchLabel, BorderLayout.EAST );
+        panel.add( searchOptions, BorderLayout.EAST );
+        panel.add( searchBox, BorderLayout.EAST );
+        panel.add( searchButton, BorderLayout.EAST );
+        searchBox.setFont( new Font( "Verdana", Font.PLAIN, 12 ) );
+        paneTop.add( panel, BorderLayout.EAST );
+        paneBottom = new JPanel();
+        paneBottom.setLayout( new BorderLayout() );
+        paneBottom.add( statusBar, BorderLayout.SOUTH );
+        JPanel paneBottomBody = new JPanel();
+        paneBottom.add( paneBottomBody, BorderLayout.NORTH );
+        paneBottom.add( new JSeparator( SwingConstants.HORIZONTAL ) );
+        viewButton = new JButton( "View" );
+        reportButton = new JButton( "Report" );
+        distributionButton = new JButton( "Distributions" );
+        paneBottomBody.add( viewButton );
+        paneBottomBody.add( reportButton );
+        paneBottomBody.add( distributionButton );
+        add( paneBottom, BorderLayout.SOUTH );
+        model = new FeastTableModel( fbd.connR,
+            fbd.connL,
+            online,
+            DEFAULT_QUERY );
+        table = new JTable( model );
+        listModel = table.getSelectionModel();
+        listModel.setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
+        listModel.addListSelectionListener( new SharedListSelectionHandler() );
+        table.setSelectionModel( listModel );
+        table.setPreferredScrollableViewportSize( table.getPreferredSize() );
+        table.setFillsViewportHeight( true );
+        JScrollPane scrollPane = new JScrollPane( table );
+        add( scrollPane );
+
+        editF.addActionListener( new ActionListener()
+        {
+            @Override
+            public void actionPerformed( ActionEvent arg0 )
+            {
+                System.out.println( "Trying to edit something" );
+            }
+        } );
+
+        insert.addActionListener( new ActionListener()
+        {
+            @Override
+            public void actionPerformed( ActionEvent arg0 )
+            {
+                System.out.println( "Insert Attempted" );
+                SDIForm sdi = new SDIForm( connR,
+                    connL,
+                    true,
+                    fbd.que,
+                    fbd.isConnected );
+                sdi.setVisible( true );
+                model.fireTableDataChanged();
+            }
+        } );
+
+        print.addActionListener( new ActionListener()
+        {
+            @Override
+            public void actionPerformed( ActionEvent arg0 )
+            {
+                JFileChooser jfc = new JFileChooser();
+                jfc.setFileSelectionMode( 1 );
+                jfc.setApproveButtonText( "Directory..." );
+                String directory = "";
+                jfc.showDialog( searchBox, null );
+                directory = jfc.getSelectedFile().getAbsolutePath();
+                // f.printableDB( online, directory, data );
+            }
+        } );
+        /*
+         * delete.addActionListener( new ActionListener() {
+         * 
+         * @Override public void actionPerformed( ActionEvent arg0 ) { for ( int
+         * i = 0; i < data.size(); i++ ) { row = (Vector)data.get( i );
+         * 
+         * if ( (Boolean)row.get( 0 ) ) { System.out.println("delete test: " +
+         * row.get(1)); f.delete( fbd.isConnected, (Integer)row.get( 1 ),
+         * fbd.que ); } } model.refresh(); } } );
+         */
+        exit.addActionListener( new ActionListener()
+        {
+            @Override
+            public void actionPerformed( ActionEvent arg0 )
+            {
+                int result = displayExitDialog();
+                if ( result == JOptionPane.YES_OPTION )
+                {
+                    try
+                    {
+                        if ( online )
+                            connR.close();
+                        connL.close();
+                    }
+                    catch ( SQLException e )
+                    {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                    System.exit( 0 );
+                }
+            }
+        } );
         addWindowListener( new WindowListener()
         {
             public void windowActivated( WindowEvent arg0 )
@@ -212,6 +269,20 @@ public class GUIFrameMatt extends JFrame
                 if ( result == JOptionPane.YES_OPTION )
                 {
                     dispose();
+                    try
+                    {
+                        if ( online )
+                        {
+                            connR.close();
+                        }
+                        connL.close();
+                    }
+                    catch ( SQLException e )
+                    {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                    System.exit( 0 );
                 }
             }
 
@@ -241,216 +312,340 @@ public class GUIFrameMatt extends JFrame
             {
             }
         } );
-        // setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        panel = new JPanel();
-        panel.setLayout( new FlowLayout( FlowLayout.RIGHT ) );
-        searchBox = new JTextField( 10 );
-        searchBox.addKeyListener( new KeyAdapter()
+
+        searchBox.addActionListener( new ActionListener()
         {
-            @Override
-            public void keyPressed( KeyEvent e )
+            public void actionPerformed( ActionEvent e )
             {
-                if ( e.getKeyCode() == KeyEvent.VK_DELETE )
+                String text = searchBox.getText();
+                String option = (String)searchOptions.getSelectedItem();
+                String request;
+                if ( option == "Agency" )
                 {
-                    searching = searching.substring( 0, searching.length() - 1 );
+                    request = new String( "SELECT * FROM jos_fb_agency WHERE Agency_Name LIKE \'"
+                        + text + "%\'" );
                 }
-                else if ( e.getKeyCode() == KeyEvent.VK_ENTER )
+                else if ( option == "Agent" )
                 {
-                    String text = searchBox.getText();
-                    String option = (String)searchOptions.getSelectedItem();
+                    request = new String( "SELECT * FROM jos_fb_agencyRep WHERE Rep_FName LIKE \'"
+                        + text + "%\' or Rep_LName LIKE \'" + text + "%\'" );
+                }
+                else if ( text == "" )
+                {
+                    request = DEFAULT_QUERY;
+                }
+                else if ( option == "Zip_Code" )
+                {
+                    request = new String( "SELECT * FROM jos_fb_customer WHERE "
+                        + option + " LIKE \'" + text + "\'" );
                 }
                 else
                 {
-                    char c = e.getKeyChar();
-                    searching += c;
-                    if ( num == 0 )
+                    request = new String( "SELECT * FROM jos_fb_customer WHERE First_Name LIKE  \'"
+                        + text + "%\' or Last_Name LIKE \'" + text + "%\'" );
+                }
+                try
+                {
+                    model.setQuery( request );
+                }
+                catch ( Exception e1 )
+                {
+                    JOptionPane.showMessageDialog( null,
+                        e1.getMessage(),
+                        "Database error",
+                        JOptionPane.ERROR_MESSAGE );
+                    try
                     {
-
+                        model.setQuery( DEFAULT_QUERY );
+                    }
+                    catch ( Exception e2 )
+                    {
+                        JOptionPane.showMessageDialog( null,
+                            e2.getMessage(),
+                            "Database error",
+                            JOptionPane.ERROR_MESSAGE );
+                        System.exit( 0 );
                     }
                 }
             }
         } );
-        searchButton = new JButton( "Search" );
-        searchButton.addMouseListener( new MouseAdapter()
+        searchButton.addActionListener( new ActionListener()
         {
-            public void mouseClicked( MouseEvent e )
+            public void actionPerformed( ActionEvent e )
             {
                 String text = searchBox.getText();
                 String option = (String)searchOptions.getSelectedItem();
+                String request;
+                if ( option == "Agency" )
+                {
+                    request = new String( "SELECT * FROM jos_fb_agency WHERE Agency_Name LIKE \'"
+                        + text + "%\'" );
+                }
+                else if ( option == "Agent" )
+                {
+                    request = new String( "SELECT * FROM jos_fb_agencyRep WHERE Rep_FName LIKE \'"
+                        + text + "%\' or Rep_LName LIKE \'" + text + "%\'" );
+                }
+                else if ( text == "" || option == "" )
+                {
+                    request = DEFAULT_QUERY;
+                }
+                else if ( option == "Zip_Code" )
+                {
+                    request = new String( "SELECT * FROM jos_fb_customer WHERE "
+                        + option + " LIKE \'" + text + "\'" );
+                }
+                else
+                {
+                    request = new String( "SELECT * FROM jos_fb_customer WHERE First_Name LIKE  \'"
+                        + text + "%\' or Last_Name LIKE \'" + text + "%\'" );
+                }
+                try
+                {
+                    model.setQuery( request );
+                }
+                catch ( Exception e1 )
+                {
+                    JOptionPane.showMessageDialog( null,
+                        e1.getMessage(),
+                        "Database error",
+                        JOptionPane.ERROR_MESSAGE );
+                    try
+                    {
+                        model.setQuery( DEFAULT_QUERY );
+                    }
+                    catch ( Exception e2 )
+                    {
+                        JOptionPane.showMessageDialog( null,
+                            e2.getMessage(),
+                            "Database error",
+                            JOptionPane.ERROR_MESSAGE );
+                        System.exit( 0 );
+                    }
+                }
             }
         } );
-        searchLabel = new JLabel( "Search by: " );
-        searchOptions = new JComboBox( cbList );
-        panel.add( searchLabel, BorderLayout.EAST );
-        panel.add( searchOptions, BorderLayout.EAST );
-        panel.add( searchBox, BorderLayout.EAST );
-        panel.add( searchButton, BorderLayout.EAST );
-        searchBox.setFont( new Font( "Verdana", Font.PLAIN, 12 ) );
-        paneTop.add( panel, BorderLayout.EAST );
-        paneBottom = new JPanel();
-        viewButton = new JButton( "View" );
+
         viewButton.addActionListener( new ActionListener()
         {
             @Override
             public void actionPerformed( ActionEvent e )
             {
-                for ( int i = 0; i < data.size(); i++ )
+                int shift = 0;
+                int move;
+                try
                 {
-                    row = (Vector)data.get( i );
-                    if ( (Boolean)row.get( 0 ) )
+                    // move = result.getRow() - 1;
+                    // result.relative( -move );
+                    if ( !online )
                     {
-                        Integer id = (Integer)row.get( 1 );
-                        SDIForm sdi = new SDIForm(conn, false);
-                        try
+                        stmt = connL.createStatement();
+                        move = selected.get( 0 );
+                        String SELECT_ONE_ROW = "SELECT * FROM jos_fb_customer LIMIT 1 OFFSET "
+                            + move + ";";
+                        result = stmt.executeQuery( SELECT_ONE_ROW );
+                        for ( int i = 0; i < selected.size(); i++ )
                         {
-                            currentInfo = functions.retrieveUser( id, conn );
-                            sdi.idField.setText( currentInfo[1].toString() );
-                            sdi.firstNameField.setText( (String)currentInfo[2] );
-                            sdi.lastNameField.setText( (String)currentInfo[3] );
-                            sdi.addressField.setText( (String)currentInfo[4] );
-                            sdi.apartmentNumberField.setText( (String)currentInfo[5] );
-                            sdi.cityField.setText( (String)currentInfo[6] );
-                            sdi.zipField.setText( currentInfo[7].toString() );
-                            sdi.phoneField.setText( currentInfo[8].toString() );
-                            sdi.numChildrenField.setText( currentInfo[9].toString() );
-                            sdi.numAdultsField.setText( currentInfo[10].toString() );
-                            sdi.numSeniorsField.setText( currentInfo[11].toString() );
-                            Integer n = (Integer)currentInfo[9]
-                                + (Integer)currentInfo[10]
-                                + (Integer)currentInfo[11];
-                            sdi.totInHouseholdField.setText( n.toString() );
-                            sdi.foodstamps.setSelected( (Boolean)currentInfo[12] );
-                            sdi.tanf.setSelected( (Boolean)currentInfo[13] );
-                            sdi.ssi.setSelected( (Boolean)currentInfo[14] );
-                            sdi.medicaid.setSelected( (Boolean)currentInfo[15] );
-                            sdi.hhIncomeField.setText( currentInfo[16].toString() );
-                            sdi.weekly.setSelected( (Boolean)currentInfo[17] );
-                            sdi.monthly.setSelected( (Boolean)currentInfo[18] );
-                            sdi.annually.setSelected( (Boolean)currentInfo[19] );
+                            System.out.println( "indexes: " + selected.get( i ) );
                         }
-                        catch ( NoSuchObjectException l )
+                        System.out.println( "move: " + move );
+                    }
+                    else
+                    {
+                        stmt = connR.createStatement();
+                        move = result.getRow() - 1;
+                        result.relative( -move );
+                    }
+
+                }
+                catch ( SQLException e2 )
+                {
+                    e2.printStackTrace();
+                }
+                for ( int i = 0; i < numberOfRows; i++ )
+                {
+                    try
+                    {
+                        for ( int j = 0; j < selected.size(); j++ )
                         {
-                            // TODO Auto-generated catch block
-                            l.printStackTrace();
+                            if ( result.getRow() == selected.get( j ) )
+                            {
+                                Integer id = result.getInt( 1 );
+                                SDIForm sdi = new SDIForm( connR,
+                                    connL,
+                                    false,
+                                    fbd.que,
+                                    fbd.isConnected );
+                                try
+                                {
+                                    currentInfo = functions.retrieveUser( id,
+                                        fbd.isConnected );
+                                    sdi.idField.setText( currentInfo[1].toString() );
+                                    sdi.firstNameField.setText( (String)currentInfo[2] );
+                                    sdi.lastNameField.setText( (String)currentInfo[3] );
+                                    sdi.addressField.setText( (String)currentInfo[4] );
+                                    sdi.apartmentNumberField.setText( (String)currentInfo[5] );
+                                    sdi.cityField.setText( (String)currentInfo[6] );
+                                    sdi.zipField.setText( currentInfo[7].toString() );
+                                    sdi.phoneField.setText( currentInfo[8].toString() );
+                                    sdi.numChildrenField.setText( currentInfo[9].toString() );
+                                    sdi.numAdultsField.setText( currentInfo[10].toString() );
+                                    sdi.numSeniorsField.setText( currentInfo[11].toString() );
+                                    Integer n = (Integer)currentInfo[9]
+                                        + (Integer)currentInfo[10]
+                                        + (Integer)currentInfo[11];
+                                    sdi.totInHouseholdField.setText( n.toString() );
+                                    sdi.foodstamps.setSelected( (Boolean)currentInfo[12] );
+                                    sdi.tanf.setSelected( (Boolean)currentInfo[13] );
+                                    sdi.ssi.setSelected( (Boolean)currentInfo[14] );
+                                    sdi.medicaid.setSelected( (Boolean)currentInfo[15] );
+                                    sdi.hhIncomeField.setText( currentInfo[16].toString() );
+                                    sdi.weekly.setSelected( (Boolean)currentInfo[17] );
+                                    sdi.monthly.setSelected( (Boolean)currentInfo[18] );
+                                    sdi.annually.setSelected( (Boolean)currentInfo[19] );
+                                }
+                                catch ( NoSuchObjectException l )
+                                {
+                                    l.printStackTrace();
+                                }
+                                sdi.setLocation( 500 + shift, 250 + shift );
+                                shift += 20;
+                                sdi.setVisible( true );
+                            }
                         }
-                        sdi.setVisible( true );
+                        result.next();
+                         //model.fireTableDataChanged();
+                    }
+                    catch ( SQLException e1 )
+                    {
+                        e1.printStackTrace();
                     }
                 }
             }
         } );
-        reportButton = new JButton( "Report" );
+
         reportButton.addActionListener( new ActionListener()
         {
             @Override
             public void actionPerformed( ActionEvent e )
             {
-                for ( int i = 0; i < data.size(); i++ )
+                int move;
+                try
                 {
-                    row = (Vector)data.get( i );
-                    if ( (Boolean)row.get( 0 ) )
+                   if(!online)
                     {
-                        Integer id = (Integer)row.get( 1 );
-                        int one = 1;
-                        if ( id.equals( "" ) )
-                        {
-                            JOptionPane.showMessageDialog( null,
-                                "Please, enter a customer ID",
-                                "Customer Search Error",
-                                JOptionPane.INFORMATION_MESSAGE );
-                        }
-                        else
-                        {
-                            try
-                            {
-                                currentInfo = functions.retrieveUser( id, conn );
-                                System.out.println( "Retrieving Agency" );
-                                Object[] agencyInfo = functions.retrieveAgency( one, conn );
-                                System.out.println( "Retrieving Agent" );
-                                Object[] agentInfo = functions.retrieveAgent( one, conn );
-                                PdfGenerator.populateSDIForm( currentInfo,
-                                    agencyInfo,
-                                    agentInfo,
-                                    population );
-                                population++;
-                            }
-                            catch ( NoSuchObjectException o )
-                            {
-                                // TODO Auto-generated catch block
-                                JOptionPane.showMessageDialog( null,
-                                    "There is no user: \"" + id
-                                        + "\" in the database",
-                                    "Customer Search Error",
-                                    JOptionPane.INFORMATION_MESSAGE );
-                            }
-                            catch ( NumberFormatException o )
-                            {
-                                // TODO Auto-generated catch block
-                                o.printStackTrace();
-                            }
-                        }
+                       move = selected.get(0);
+                       String SELECT_ONE_ROW = "SELECT * FROM jos_fb_customer LIMIT 1 OFFSET "
+                           + move + ";";
+                        result = stmt.executeQuery( SELECT_ONE_ROW );
+                        for(int i = 0; i < selected.size(); i++){
+                            System.out.println("indexes: " + selected.get( i ));
+                        }                        
+                        System.out.println("move: " + move);
+                    }
+                    else{
+                    move = result.getRow();
+                    System.out.println("move: " + move);
+                    result.relative( -move );
                     }
                 }
+                catch ( SQLException e2 )
+                {
+                    e2.printStackTrace();
+                }
+                for ( int i = 0; i < numberOfRows; i++ )
+                {
+                    try
+                    {
+                        if ( selected != null )
+                        {
+                            for ( int j = 0; j < selected.size(); j++ )
+                            {
+                                if ( result.getRow() == selected.get( j ) )
+                                {
+                                    Integer id = (Integer)result.getInt( 1 );
+                                    System.out.println("Customer ID " + id);
+                                    String acct_num = "2843";
+                                    int one = 1;
+                                    try
+                                    {
+                                        currentInfo = functions.retrieveUser( id,
+                                            fbd.isConnected );
+                                        System.out.println( "Retrieving Agency" );
+                                        Object[] agencyInfo = functions.retrieveAgency( acct_num,
+                                            fbd.isConnected );
+                                        System.out.println( "Retrieving Agent" );
+                                        Object[] agentInfo = functions.retrieveAgent( one,
+                                            fbd.isConnected );
+                                        PdfGenerator.populateSDIForm( currentInfo,
+                                            agencyInfo,
+                                            agentInfo,
+                                            population );
+                                        population++;
+                                    }
+                                    catch ( NoSuchObjectException o )
+                                    {
+                                        // TODO Auto-generated catch block
+                                        JOptionPane.showMessageDialog( null,
+                                            "There is no user: \"" + id
+                                                + "\" in the database",
+                                            "Customer Search Error",
+                                            JOptionPane.INFORMATION_MESSAGE );
+                                    }
+                                    catch ( NumberFormatException o )
+                                    {
+                                        // TODO Auto-generated catch block
+                                        o.printStackTrace();
+                                    }
+                                }
+                            }
+                        }
+                        result.next();
+                    }
+                    catch ( Exception b )
+                    {
+                        b.printStackTrace();
+                    }
+                }
+                PdfGenerator.mergePdfFiles( population );
+                population = 0;
                 population = 0;
             }
         } );
-        paneBottom.add( viewButton );
-        paneBottom.add( reportButton );
-        add( paneBottom, BorderLayout.SOUTH );
-        model = new SampleTableModel();
-        table = new JTable( model );
-        table.setPreferredScrollableViewportSize( table.getPreferredSize() );
-        table.setFillsViewportHeight( true );
-        JScrollPane scrollPane = new JScrollPane( table );
-        add( scrollPane );
+
+        distributionButton.addActionListener( new ActionListener()
+        {
+            @Override
+            public void actionPerformed( ActionEvent e )
+            {
+                int res = displayDistributionDialog();
+                if ( res == JOptionPane.YES_OPTION )
+                {
+                    FeastDistribution dist = new FeastDistribution( connR,
+                        connL,
+                        online );
+                    dist.setVisible( true );
+                }
+                if ( res == JOptionPane.NO_OPTION )
+                {
+                    FeastDistribution dist = new FeastDistribution( "load" );
+                    dist.setVisible( true );
+                }
+                if ( res == JOptionPane.CANCEL_OPTION )
+                {
+
+                }
+            }
+        } );
+
     }
 
 
     public static void main( String[] args )
     {
-        fbd = new FBDatabase();
-        fbd.main( null );
-
-        try
-        {
-            Class.forName( driver ).newInstance();
-            Class.forName( driverL ).newInstance();
-            if ( fbd.isConnected )
-            {
-                conn = DriverManager.getConnection( url + dbName,
-                    userName,
-                    password );
-            }
-            else
-            {
-                conn = DriverManager.getConnection( urlL + dbNameL,
-                    userName,
-                    password );
-            }
-        }
-        catch ( SQLException e )
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        catch ( InstantiationException e )
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        catch ( IllegalAccessException e )
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        catch ( ClassNotFoundException e )
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
         JFrame GUI = new GUIFrame();
         GUI.setLocationRelativeTo( null );
         GUI.setVisible( true );
-
     }
 
 
@@ -465,52 +660,89 @@ public class GUIFrameMatt extends JFrame
     }
 
 
-    class SampleTableModel extends AbstractTableModel
+    private int displayDistributionDialog()
+    {
+        Object[] options = { "Create New", "Load", "Cancel" };
+        int result = JOptionPane.showOptionDialog( this,
+            "Would you like to create a new Distribution or Load a Previous one?",
+            "Distributions",
+            JOptionPane.YES_NO_CANCEL_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            options[2] );
+        return result;
+    }
+
+
+    class FeastTableModel extends AbstractTableModel
     {
         /**
-		 * 
-		 */
+         * 
+         */
+        private Statement stmtL;
+
+        private Statement stmtR;
+
+        private ResultSetMetaData metaData;
+
+        private boolean connectedToDatabase = false;
+
         private static final long serialVersionUID = 1L;
 
 
-        public SampleTableModel()
+        public FeastTableModel(
+            Connection connR,
+            Connection connL,
+            boolean online,
+            String query )
+        {
+            connectedToDatabase = online;
+            try
+            {
+                System.out.println( "Test connection local: "
+                    + connL.toString() );
+                stmtL = connL.createStatement();
+                if ( connectedToDatabase )
+                {
+                    stmtR = connR.createStatement();
+                }
+                setQuery( query );
+            }
+            catch ( SQLException e )
+            {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+        }
+
+
+        private void setQuery( String query )
         {
             try
             {
-                System.out.println( "building local table" );
-                stmt = conn.createStatement();
-                result = stmt.executeQuery( "SELECT * FROM fb_customer" );
-                ResultSetMetaData md = result.getMetaData();
-                int columnCount = md.getColumnCount();
-                columns = new Vector( 8 );
-                fullcolumns = new Vector( columnCount );
-                columns.addElement( "Selected" );
-                fullcolumns.addElement( "Selected" );
-                int m = 0;
-                for ( int i = 1; i <= columnCount; i++ )
+
+                if ( online )
                 {
-                    if ( m < 8 )
-                    {
-                        columns.addElement( md.getColumnName( i ) );
-                        m++;
-                    }
-                    fullcolumns.addElement( md.getColumnName( i ) );
+                    result = stmtR.executeQuery( query );
+                    metaData = result.getMetaData();
+                    result.last();
+                    numberOfRows = result.getRow();
                 }
-                data = new Vector();
-                fulldata = new Vector();
-                while ( result.next() )
+                else
                 {
-                    row = new Vector( columnCount );
-                    row.addElement( new Boolean( false ) );
-                    for ( int i = 1; i <= columnCount; i++ )
-                    {
-                        row.addElement( result.getObject( i ) );
-                    }
-                    data.addElement( row );
-                    fulldata.addElement( row );
+
+                    result = stmtL.executeQuery( SIZE_DATABASE_QUERY );
+                    numberOfRows = result.getInt( 1 );
+                    result = stmtL.executeQuery( query );
+                    metaData = result.getMetaData();
                 }
+
+                // vcxSystem.out.println();
+                fireTableStructureChanged();
             }
-            catch ( Exception e )
+            catch ( SQLException e )
             {
                 e.printStackTrace();
             }
@@ -519,92 +751,133 @@ public class GUIFrameMatt extends JFrame
 
         public void refresh()
         {
-            try
-            {
-                stmt = conn.createStatement();
-                result = stmt.executeQuery( "SELECT * FROM fb_customer" );
-                ResultSetMetaData md = result.getMetaData();
-                int columnCount = md.getColumnCount();
-                columns = new Vector( 8 );
-                fullcolumns = new Vector( columnCount );
-                columns.addElement( "Selected" );
-                fullcolumns.addElement( "Selected" );
-                int m = 0;
-                for ( int i = 1; i <= columnCount; i++ )
-                {
-                    if ( m < 8 )
-                    {
-                        columns.addElement( md.getColumnName( i ) );
-                        m++;
-                    }
-                    fullcolumns.addElement( md.getColumnName( i ) );
-                }
-                data = new Vector();
-                fulldata = new Vector();
-                while ( result.next() )
-                {
-                    row = new Vector( columnCount );
-                    row.addElement( new Boolean( false ) );
-                    for ( int i = 1; i <= columnCount; i++ )
-                    {
-                        row.addElement( result.getObject( i ) );
-                    }
-                    data.addElement( row );
-                    fulldata.addElement( row );
-                }
-            }
-            catch ( Exception e )
-            {
-                e.printStackTrace();
-            }
+
         }
 
 
         @Override
         public int getColumnCount()
         {
-            return columns.size();
+            try
+            {
+                return metaData.getColumnCount();
+            }
+            catch ( Exception e )
+            {
+                e.printStackTrace();
+            }
+            return 0;
         }
 
 
         @Override
         public int getRowCount()
         {
-            return data.size();
+            return numberOfRows;
         }
 
 
         @Override
         public String getColumnName( int column )
         {
-            return columns.get( column );
+            try
+            {
+                return metaData.getColumnName( column + 1 );
+            }
+            catch ( Exception e )
+            {
+                e.printStackTrace();
+            }
+            return "";
         }
 
 
         @Override
         public Object getValueAt( int r, int col )
         {
-            row = (Vector)data.get( r );
-            return row.get( col );
+            try
+            {
+
+                if ( online )
+                {
+                    result = stmtR.executeQuery( DEFAULT_QUERY );
+                    result.absolute( r + 1 );
+                }
+                else
+                {
+
+                    String SELECT_ONE_ROW = "SELECT * FROM jos_fb_customer LIMIT 1 OFFSET "
+                        + r + ";";
+                    result = stmtL.executeQuery( SELECT_ONE_ROW );
+                }
+
+                // System.out.println(r+1);
+                return result.getObject( col + 1 );
+            }
+            catch ( Exception e )
+            {
+                e.printStackTrace();
+            }
+            return "";
         }
 
 
-        public Class<?> getColumnClass( int c )
+        public Class getColumnClass( int c )
         {
-            return getValueAt( 1, c ).getClass();
+            try
+            {
+                String className = metaData.getColumnClassName( c + 1 );
+                return Class.forName( className );
+            }
+            catch ( Exception exception )
+            {
+                exception.printStackTrace();
+            }
+            return Object.class;
         }
 
 
-        public void setValueAt( Object value, int row, int column )
+        public boolean isCellEditable( int row, int col )
         {
-            ( (Vector)data.get( row ) ).set( column, value );
-            fireTableCellUpdated( row, column );
+            if ( col == 1 )
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
         }
+    }
 
 
-        public boolean isCellEditable( int row, int column )
+    class SharedListSelectionHandler implements ListSelectionListener
+    {
+        public void valueChanged( ListSelectionEvent e )
         {
-            return true;
+            ListSelectionModel lsm = (ListSelectionModel)e.getSource();
+            selected = new ArrayList<Integer>();
+            String output = "";
+            if ( lsm.isSelectionEmpty() )
+            {
+                System.out.println( " <none>" );
+            }
+            else
+            {
+                // Find out which indexes are selected.
+                int minIndex = lsm.getMinSelectionIndex();
+                int maxIndex = lsm.getMaxSelectionIndex();
+                for ( int i = minIndex; i <= maxIndex; i++ )
+                {
+                    if ( lsm.isSelectedIndex( i ) )
+                    {
+                        output += ( " " + i );
+                        selected.add( i + 1 );
+                    }
+                }
+            }
+            output += "\n";
+            System.out.println( output );
         }
     }
 }
