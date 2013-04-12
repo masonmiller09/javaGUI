@@ -1,0 +1,317 @@
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.sql.Connection;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JSeparator;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
+
+
+public class FeastMainFrame extends JFrame{
+    
+    static FBDatabase fbd;
+    public static boolean online;
+    public static Connection connL = null;
+    public static boolean visible;
+    queryQue que;
+    static FeastMainFrame fmf;
+    JPanel panelRow0, panelRow1, panelRow2, panelRow3, panelRow4, panelRow5,
+            panelRow6, panelRow7, panelRow8, panelRow9, panelRow10, panelRow11,
+            panelRow12, panelRow13, panelRow14, panelRow15, panelRow16, panelRow17,
+            panelRow18, panelRow19, panelRow20, panel;
+    JLabel customerSearch,customerSearchDescription,advancedSearch,advancedSearchDescription,
+            distributionInput,distributionInputDescription,generatePDF,generatePDFDescription,
+            controlFunctions,controlFunctionsDescription;
+    JTextField customerSearchField;
+    JButton searchButton,advancedSearchButton,distributionInputButton,generatePDFButton,
+            createCustomerButton,createAgencyButton,createRepresentativeButton;
+    
+    public FeastMainFrame() {
+        super("Feast Interface");
+        fbd = new FBDatabase();
+        visible = true;
+        connL = fbd.connL;
+        online = fbd.isConnected;
+        que = fbd.que;
+        initComponents();
+        setSize(575, 780);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation( WindowConstants.DO_NOTHING_ON_CLOSE );
+        addWindowListener( new WindowListener()
+        {
+            public void windowActivated( WindowEvent arg0 )
+            {
+            }
+            public void windowClosed( WindowEvent arg0 )
+            {
+            }
+            public void windowClosing( WindowEvent arg0 )
+            {
+                int result = displayExitDialog();
+                if ( result == JOptionPane.YES_OPTION )
+                {
+                    dispose();
+                    System.exit( 0 );
+                }
+            }
+            @Override
+            public void windowDeactivated( WindowEvent arg0 )
+            {
+                // TODO Auto-generated method stub
+
+            }
+            @Override
+            public void windowDeiconified( WindowEvent arg0 )
+            {
+                // TODO Auto-generated method stub
+
+            }
+            public void windowIconified( WindowEvent arg0 )
+            {
+            }
+            public void windowOpened( WindowEvent arg0 )
+            {
+            }
+        } );
+    }
+    
+    public void refreshVisible(boolean vis)
+    {
+        setVisible(vis);
+    }
+    
+    private void initComponents() {
+        panelRow0 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow3 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow4 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow5 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow6 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow7 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow8 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow9 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow10 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow11 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow12 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow13 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow14 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow15 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow16 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow17 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow18 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow19 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelRow20 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panel = new JPanel(new GridLayout(0, 1));
+        
+        //JLabels
+        customerSearch = new JLabel("Customer Search:");
+        Font newLabelFont=new Font(customerSearch.getFont().getName(),~Font.BOLD,customerSearch.getFont().getSize());
+        customerSearchDescription = new JLabel("Input first name or last name of Customer");
+        customerSearchDescription.setFont(newLabelFont);
+        advancedSearch = new JLabel("Advanced Search:");
+        advancedSearchDescription = new JLabel("Click the button below to perform an advanced search");
+        advancedSearchDescription.setFont(newLabelFont);
+        distributionInput = new JLabel("Distribution Input:");
+        distributionInputDescription = new JLabel("Just finish a distribution? Please input your distribution details");
+        distributionInputDescription.setFont(newLabelFont);
+        generatePDF = new JLabel("Generate Populated PDF Forms:");
+        generatePDFDescription = new JLabel("Generate SDI forms with returning customer's information already filled in and print!");
+        generatePDFDescription.setFont(newLabelFont);
+        controlFunctions = new JLabel("Control Functions:");
+        controlFunctionsDescription = new JLabel("Customer, agency, and agency representative control pages");
+        controlFunctionsDescription.setFont(newLabelFont);
+        
+        //JTextField
+        customerSearchField = new JTextField(20);
+        
+        //JButton
+        searchButton = new JButton("Search");
+        advancedSearchButton = new JButton("Advanced Search");
+        distributionInputButton = new JButton("Input Distribution");
+        generatePDFButton = new JButton("PDF Generator");
+        createCustomerButton = new JButton("Create Customer");
+        createAgencyButton = new JButton("Create Agency");
+        createRepresentativeButton = new JButton("Create Representative");
+        
+        panelRow0.add(customerSearch);
+        panelRow1.add(customerSearchDescription);
+        panelRow2.add(customerSearchField);
+        panelRow3.add(searchButton);
+        panelRow5.add(advancedSearch);
+        panelRow6.add(advancedSearchDescription);
+        panelRow7.add(advancedSearchButton);
+        panelRow9.add(distributionInput);
+        panelRow10.add(distributionInputDescription);
+        panelRow11.add(distributionInputButton);
+        panelRow13.add(generatePDF);
+        panelRow14.add(generatePDFDescription);
+        panelRow15.add(generatePDFButton);
+        panelRow17.add(controlFunctions);
+        panelRow18.add(controlFunctionsDescription);
+        panelRow19.add(createCustomerButton);
+        panelRow19.add(createAgencyButton);
+        panelRow19.add(createRepresentativeButton);
+        
+        panel.add(panelRow0);
+        panel.add(panelRow1);
+        panel.add(panelRow2);
+        panel.add(panelRow3);
+        panel.add(panelRow4);
+        panel.add(new JSeparator(JSeparator.HORIZONTAL));
+        panel.add(panelRow5);
+        panel.add(panelRow6);
+        panel.add(panelRow7);
+        panel.add(panelRow8);
+        panel.add(new JSeparator(JSeparator.HORIZONTAL));
+        panel.add(panelRow9);
+        panel.add(panelRow10);
+        panel.add(panelRow11);
+        panel.add(panelRow12);
+        panel.add(new JSeparator(JSeparator.HORIZONTAL));
+        panel.add(panelRow13);
+        panel.add(panelRow14);
+        panel.add(panelRow15);
+        panel.add(panelRow16);
+        panel.add(new JSeparator(JSeparator.HORIZONTAL));
+        panel.add(panelRow17);
+        panel.add(panelRow18);
+        panel.add(panelRow19);
+        panel.add(panelRow20);
+        this.add(panel);
+        
+        //Listeners
+        searchButton.addActionListener( new ActionListener()
+        {
+            public void actionPerformed( ActionEvent e )
+            {
+                String text = customerSearchField.getText();
+                System.out.println("Text being got: " + text);
+                CustomerSearchPanel searchPanel = new CustomerSearchPanel(connL,que,online,text,visible, fmf);
+                searchPanel.setLocationRelativeTo( null );
+                searchPanel.setVisible(true);
+                refreshVisible(false);
+            }
+        });
+        advancedSearchButton.addActionListener( new ActionListener ()
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                AdvancedSearchPanel searchPanel = new AdvancedSearchPanel(connL, fbd.que, online, visible, fmf);
+                searchPanel.setLocationRelativeTo(null);
+                searchPanel.setVisible(true);
+                dispose();
+            }
+        });
+        distributionInputButton.addActionListener( new ActionListener ()
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                int answer = displayDistributionDialog();
+                if (answer == JOptionPane.YES_OPTION) {
+                    SDIForm sdi = new SDIForm(connL, true, fbd.que, online, visible, fmf);
+                    sdi.setLocationRelativeTo(null);
+                    sdi.setVisible(true);
+                    dispose();
+                }
+                else if (answer == JOptionPane.NO_OPTION) {
+                    System.out.println("No");
+                    DistributionInputPanel dip = new DistributionInputPanel(connL, fbd.que, online, visible, fmf);
+                    dip.setLocationRelativeTo(null);
+                    dip.setVisible(true);
+                    dispose();
+                }
+                else {
+                    System.out.println("Cancel");
+                }
+            }
+        });
+        generatePDFButton.addActionListener( new ActionListener ()
+        {
+            public void actionPerformed(ActionEvent e) 
+            {
+                GeneratePdfPanel pdf = new GeneratePdfPanel(connL, fbd.que, online, visible, fmf);
+                pdf.setLocationRelativeTo(null);
+                pdf.setVisible(true);
+                dispose();
+            }
+        });
+        createCustomerButton.addActionListener( new ActionListener() 
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                SDIForm sdi = new SDIForm(connL, true, fbd.que, online, visible, fmf);
+                sdi.setLocationRelativeTo(null);
+                sdi.setVisible(true);
+                dispose();
+            }
+        });
+        createAgencyButton.addActionListener( new ActionListener() 
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                AddAgencyPanel agency = new AddAgencyPanel(connL, fbd.que, online, visible, fmf);
+                agency.setLocationRelativeTo(null);
+                agency.setVisible(true);
+                dispose();
+            }
+        });
+        createRepresentativeButton.addActionListener( new ActionListener() 
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                AddRepPanel rep = new AddRepPanel(connL, fbd.que, online, visible, fmf);
+                rep.setLocationRelativeTo(null);
+                rep.setVisible(true);
+                dispose();
+            }
+        });
+    }
+    
+    private int displayExitDialog()
+    {
+        int result = JOptionPane.showConfirmDialog( this,
+            "Are you sure?",
+            "Exit?",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE );
+        return result;
+    }
+    
+    private int displayDistributionDialog()
+    {
+        Object[] options = { "Create New Customer", "Enter Returning Customer(s)", "Cancel" };
+        int result = JOptionPane.showOptionDialog( this,
+            "Would you like to create a new Customer or \n enter a returning customer/group of returning customers?",
+            "Distributions",
+            JOptionPane.YES_NO_CANCEL_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            options[2] );
+        return result;
+    }
+    
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                fmf = new FeastMainFrame();
+               fmf.setLocationRelativeTo( null );
+                fmf.setVisible( true );
+            }
+        });     
+    }
+
+}
