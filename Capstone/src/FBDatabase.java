@@ -98,11 +98,13 @@ public class FBDatabase
     
     int updateCounter = -1;
 
-
+    //GUIFrame.FeastTableModel ftm;
+    
     // ----------------------
 
     public FBDatabase()
     {
+        
         log = new permLog();
         que = new queryQue();
         sBar = new StatusBar( connL, isConnected );
@@ -115,8 +117,12 @@ public class FBDatabase
         createConnectionTimer();
         canConnect();
     }
-
-
+   /* 
+    public void updateModel(GUIFrame.FeastTableModel f)
+    {
+        ftm = f;
+    }
+*/
     public void createConnectionTimer()
     {
         t = new Timer();
@@ -127,8 +133,11 @@ public class FBDatabase
                 System.out.println( "Timer boolean = " + timer );
                 if ( timer )
                 {
-                    System.out.println( "Test: " + canConnect() );
+                    System.out.println( "Test: " + canConnect() );                   
                     sBar.refresh( isConnected );
+                    
+                   // ftm.fireTableStructureChanged();
+                    
                 }
                 else
                 {
@@ -151,7 +160,7 @@ public class FBDatabase
                 passwordR );
             stmtR = connR.createStatement( ResultSet.TYPE_SCROLL_INSENSITIVE,
                 ResultSet.CONCUR_UPDATABLE );
-            isConnected = true;
+            //isConnected = true;
             updateCounter++;
             // rsR = stmtR.executeQuery( "Select * FROM jos_fb_customer" );
             // while(rsR.next()){
@@ -166,8 +175,7 @@ public class FBDatabase
             }
             else if(updateCounter <= 10){
                 System.out.println("Moving through the > 10's");
-                compareDBS();
-                //updateLocalDataBase();                
+                compareDBS();               
             }
             else{
                 System.out.println("Hit the 10");
@@ -206,6 +214,8 @@ public class FBDatabase
     {
         try
         {
+            isConnected = true;
+            sBar.refresh( isConnected );
             stmtL = connL.createStatement();
             stmtR = connR.createStatement();
             rL = stmtL.executeQuery( SIZE_DATABASE_QUERY );
@@ -223,6 +233,7 @@ public class FBDatabase
             checkBasics();
 
             updateIDS();
+            isConnected = false;
             return false;
         }
         catch ( SQLException e )
@@ -255,7 +266,7 @@ public class FBDatabase
                     + "' AND Street_Address = '"
                     + rR.getString( "Street_Address" ) + "';";
                 rL = stmtL.executeQuery( temp );
-                 
+                rL.next();
                 idL = rL.getInt("Customer_ID");
                 if ( idR != idL )
                 {
@@ -304,7 +315,7 @@ public class FBDatabase
                 }
                 for ( int i = 0; i < newIDS.size(); i++ )
                 {
-                    FBcustomerRS newC = new FBcustomerRS( connR,
+                    FBcustomerRS newC = new FBcustomerRS(
                         connL,
                         isConnected,
                         newIDS.get( i ) );
@@ -408,7 +419,10 @@ public class FBDatabase
     public void fullReplace()
     {
         //createLocalDataBases();
+        isConnected = true;
+        sBar.refresh( isConnected );
         updateLocalDataBase();
+        isConnected = false;
     }
 
 
@@ -466,42 +480,78 @@ public class FBDatabase
 
     public void updateLocalDataBase()
     {
-        String sql = "select * from jos_fb_customer";
+        String sqlCU = "SELECT * FROM jos_fb_customer";
+        String sqlAG = "SELECT * FROM jos_fb_agency";
+        String sqlAR = "SELECT * FROM jos_fb_agencyRep";
+        String sqlMD = "SELECT * FROM jos_fb_monthlydist";
         try
         {
             stmtL = connL.createStatement();
             stmtL.executeUpdate( "DELETE FROM jos_fb_customer;" );
-            rsR = stmtR.executeQuery( sql );
+            stmtL.executeUpdate( "DELETE FROM jos_fb_agency;" );
+            stmtL.executeUpdate( "DELETE FROM jos_fb_agencyRep;" );
+            stmtL.executeUpdate( "DELETE FROM jos_fb_monthlydist;" );
+            rsR = stmtR.executeQuery( sqlCU );
 
-            PreparedStatement prepL = connL.prepareStatement( "insert into jos_fb_customer values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);" );
+            PreparedStatement prepCU = connL.prepareStatement( "INSERT into jos_fb_customer VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);" );
+            PreparedStatement prepA = connL.prepareStatement(  "INSERT into jos_fb_agency VALUES (?, ?);" );
+            PreparedStatement prepAR = connL.prepareStatement( "INSERT into jos_fb_agencyRep VALUES (?, ?, ?, ?);" );
+            PreparedStatement prepMD = connL.prepareStatement(  "INSERT into jos_fb_monthlydist VALUES (?, ?, ?, ?);" );
             while ( rsR.next() )
             {
-                prepL.setInt( 1, rsR.getInt( "Customer_ID" ) );
-                prepL.setString( 2, rsR.getString( "Last_Name" ) );
-                prepL.setString( 3, rsR.getString( "First_Name" ) );
-                prepL.setString( 4, rsR.getString( "Street_Address" ) );
-                prepL.setString( 5, rsR.getString( "Apartment_Number" ) );
-                prepL.setString( 6, rsR.getString( "City" ) );
-                prepL.setString( 7, rsR.getString( "Zip_Code" ) );
-                prepL.setString( 8, rsR.getString( "Phone_Number" ) );
-                prepL.setInt( 9, rsR.getInt( "Number_Children" ) );
-                prepL.setInt( 10, rsR.getInt( "Number_Adults" ) );
-                prepL.setInt( 11, rsR.getInt( "Number_Seniors" ) );
-                prepL.setInt( 12, rsR.getInt( "Total_Household" ) );
-                prepL.setInt( 13, rsR.getInt( "FoodStamps_SNAP" ) );
-                prepL.setInt( 14, rsR.getInt( "TANF" ) );
-                prepL.setInt( 15, rsR.getInt( "SSI" ) );
-                prepL.setInt( 16, rsR.getInt( "Medicaid" ) );
-                prepL.setInt( 17, rsR.getInt( "HH_Income" ) );
-                prepL.setInt( 18, rsR.getInt( "Inc_Weekly" ) );
-                prepL.setInt( 19, rsR.getInt( "Inc_Monthly" ) );
-                prepL.setInt( 20, rsR.getInt( "Inc_Yearly" ) );
-                prepL.setInt( 21, rsR.getInt( "Offender" ) );
-                prepL.addBatch();
+                prepCU.setInt( 1, rsR.getInt( "Customer_ID" ) );
+                prepCU.setString( 2, rsR.getString( "Last_Name" ) );
+                prepCU.setString( 3, rsR.getString( "First_Name" ) );
+                prepCU.setString( 4, rsR.getString( "Street_Address" ) );
+                prepCU.setString( 5, rsR.getString( "Apartment_Number" ) );
+                prepCU.setString( 6, rsR.getString( "City" ) );
+                prepCU.setString( 7, rsR.getString( "Zip_Code" ) );
+                prepCU.setString( 8, rsR.getString( "Phone_Number" ) );
+                prepCU.setInt( 9, rsR.getInt( "Number_Children" ) );
+                prepCU.setInt( 10, rsR.getInt( "Number_Adults" ) );
+                prepCU.setInt( 11, rsR.getInt( "Number_Seniors" ) );
+                prepCU.setInt( 12, rsR.getInt( "Total_Household" ) );
+                prepCU.setInt( 13, rsR.getInt( "FoodStamps_SNAP" ) );
+                prepCU.setInt( 14, rsR.getInt( "TANF" ) );
+                prepCU.setInt( 15, rsR.getInt( "SSI" ) );
+                prepCU.setInt( 16, rsR.getInt( "Medicaid" ) );
+                prepCU.setInt( 17, rsR.getInt( "HH_Income" ) );
+                prepCU.setInt( 18, rsR.getInt( "Inc_Weekly" ) );
+                prepCU.setInt( 19, rsR.getInt( "Inc_Monthly" ) );
+                prepCU.setInt( 20, rsR.getInt( "Inc_Yearly" ) );
+                prepCU.setInt( 21, rsR.getInt( "Offender" ) );
+                prepCU.addBatch();
+            }
+            rsR = stmtR.executeQuery( sqlAG );
+            while(rsR.next())
+            {
+                prepA.setString( 1, rsR.getString( "Acct_Num" ) );
+                prepA.setString( 2, rsR.getString("Agency_Name") );
+                prepA.addBatch();
+            }
+            rsR = stmtR.executeQuery( sqlAR );
+            while(rsR.next())
+            {
+                prepAR.setInt( 1, rsR.getInt( "AgencyRep_ID" ) );
+                prepAR.setString( 2, rsR.getString( "Acct_Num" ) );
+                prepAR.setString( 3, rsR.getString("Rep_LName") );
+                prepAR.setString( 4, rsR.getString( "Rep_FName" ) );
+                prepAR.addBatch();
+            }
+            rsR = stmtR.executeQuery( sqlMD );
+            while(rsR.next())
+            {
+                prepMD.setInt( 1, rsR.getInt( "Customer_ID" ) );
+                prepMD.setString( 2, rsR.getString( "Acct_Num" ) );
+                prepMD.setInt( 3, rsR.getInt( "AgencyRep_ID" ) );
+                prepMD.setDate( 4, rsR.getDate( "theDate" ) );
+                prepMD.addBatch();
             }
             connL.setAutoCommit( false );
-            System.out.println( prepL.toString() );
-            prepL.executeBatch();
+            prepCU.executeBatch();
+            prepA.executeBatch();
+            prepAR.executeBatch();
+            prepMD.executeBatch();
             connL.setAutoCommit( true );
         }
         catch ( SQLException e )
@@ -628,225 +678,6 @@ public class FBDatabase
             e.printStackTrace();
         }
     }
-
-
-    public FBCustomer searchCustomerByID( int customerID )
-    {
-        FBCustomer costumer = new FBCustomer( 1, " ", " " );
-        if ( isConnected )
-        {
-            try
-            {
-                String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID="
-                    + customerID;
-                rsR = stmtR.executeQuery( sql );
-                rsR.next();
-                costumer.setCustomerID( rsR.getInt( "Customer_ID" ) );
-                costumer.setLastName( rsR.getString( "Last_Name" ) );
-                costumer.setFirstName( rsR.getString( "First_Name" ) );
-                costumer.setStreetAddress( rsR.getString( "Street_Address" ) );
-                costumer.setApartmentNumber( rsR.getInt( "Apartment_Number" ) );
-                costumer.setCity( rsR.getString( "City" ) );
-                costumer.setZipCode( rsR.getInt( "Zip_Code" ) );
-                costumer.setPhoneNumber( rsR.getLong( "Phone_Number" ) );
-                costumer.setNumberOfChildren( rsR.getInt( "Number_Children" ) );
-                costumer.setNumberOfAdults( rsR.getInt( "Number_Adults" ) );
-                costumer.setNumberOfSeniors( rsR.getInt( "Number_Seniors" ) );
-                costumer.setQualificationsFoodStamps( rsR.getInt( "FoodStamps_Snap" ) );
-                costumer.setQualificationsTANF( rsR.getInt( "TANF" ) );
-                costumer.setQualificationsSSI( rsR.getInt( "SSI" ) );
-                costumer.setQualificationsMedicaid( rsR.getInt( "Medicaid" ) );
-                costumer.setIncome( rsR.getInt( "HH_Income" ) );
-                costumer.setIncomeWeekly( rsR.getInt( "Inc_Weekly" ) );
-                costumer.setIncomeMonthly( rsR.getInt( "Inc_Monthly" ) );
-                costumer.setIncomeYearly( rsR.getInt( "Inc_Yearly" ) );
-                costumer.setOffender( rsR.getInt( "Offender" ) );
-            }
-            catch ( Exception e )
-            {
-                e.printStackTrace();
-            }
-        }
-        return costumer;
-    }
-
-
-    public FBAgency searchAgencyByID( int agencyID )
-    {
-        FBAgency agency = new FBAgency( 0, " " );
-        if ( isConnected )
-        {
-            try
-            {
-                String sql = "SELECT * FROM jos_fb_agency WHERE Agency_ID="
-                    + agencyID;
-                rsR = stmtR.executeQuery( sql );
-                rsR.next();
-                agency.setAgencyID( rsR.getInt( "Agency_ID" ) );
-                agency.setAccountNum( rsR.getInt( "Acct_Num" ) );
-                agency.setAgencyName( rsR.getString( "Agency_Name" ) );
-                sql = "SELECT * FROM jos_fb_agencyRep WHERE Agency_ID="
-                    + agencyID;
-                while ( rsR.next() )
-                {
-                    FBAgencyRep agencyRep = new FBAgencyRep( 0, " ", " " );
-                    agencyRep.setAgencyRepID( rsR.getInt( "AgencyRep_ID" ) );
-                    agencyRep.setAgencyID( rsR.getInt( "Agency_ID" ) );
-                    agencyRep.setLastName( rsR.getString( "Rep_LName" ) );
-                    agencyRep.setFirstName( rsR.getString( "Rep_FName" ) );
-                    agency.addAgencyRep( agencyRep );
-                }
-            }
-            catch ( Exception e )
-            {
-                e.printStackTrace();
-            }
-        }
-        return agency;
-    }
-
-
-    public void addNewAgency( FBAgency aAgency )
-    {
-        if ( isConnected )
-        {
-            try
-            {
-                ArrayList<FBAgencyRep> agencyReps = aAgency.getAgencyReps();
-                String insertAgencyQuery = "INSERT INTO jos_fb_agency(Acct_Num,Agency_Name) VALUES (";
-                String temp = insertAgencyQuery + "'" + aAgency.getAccountNum()
-                    + "','" + aAgency.getAgencyName() + "')";
-                stmtR.executeUpdate( temp, Statement.RETURN_GENERATED_KEYS );
-                rsR = stmtR.getGeneratedKeys();
-                int agencyID = 0;
-                if ( rsR.next() )
-                {
-                    agencyID = rsR.getInt( 1 );
-                }
-                for ( int i = 0; i < agencyReps.size(); i++ )
-                {
-                    agencyReps.get( i ).setAgencyID( agencyID );
-                    String insertAgencyRepQuery = "INSERT INTO jos_fb_agencyRep(Agency_ID, Rep_LName,Rep_FName) VALUES (";
-                    temp = insertAgencyRepQuery + "'"
-                        + agencyReps.get( i ).getAgencyID() + "','"
-                        + agencyReps.get( i ).getLastName() + "','"
-                        + agencyReps.get( i ).getFirstName() + "')";
-                    stmtR.executeUpdate( temp );
-                }
-            }
-            catch ( Exception e )
-            {
-                e.printStackTrace();
-            }
-        }
-        else
-        {
-            addNewAgencyDisconnected( aAgency );
-        }
-    }
-
-
-    public void addNewAgencyDisconnected( FBAgency aAgency )
-    {
-        try
-        {
-            String insertAgencyQuery = "INSERT INTO jos_fb_agency(Acct_Num,Agency_Name) VALUES (";
-            String temp = insertAgencyQuery + "'" + aAgency.getAccountNum()
-                + "','" + aAgency.getAgencyName() + "');";
-            File dir = new File( directoryPath );
-            File actualFile = new File( dir, que.que );
-            output = new BufferedWriter( new FileWriter( actualFile, true ) );
-            output.write( temp );
-            output.newLine();
-            ArrayList<FBAgencyRep> agencyReps = aAgency.getAgencyReps();
-            for ( int i = 0; i < agencyReps.size(); i++ )
-            {
-                agencyReps.get( i ).setAgencyID( 0 );
-                String insertAgencyRepQuery = "INSERT INTO jos_fb_agencyRep(Agency_ID, Rep_LName,Rep_FName) VALUES (";
-                temp = insertAgencyRepQuery + "'"
-                    + agencyReps.get( i ).getAgencyID() + "','"
-                    + agencyReps.get( i ).getLastName() + "','"
-                    + agencyReps.get( i ).getFirstName() + "');";
-                output.write( temp );
-                output.newLine();
-            }
-            output.close();
-        }
-        catch ( Exception e )
-        {
-            System.out.println( "Could not create file" );
-        }
-    }
-
-
-    public void addNewAgencyRep( FBAgencyRep aAgencyRep )
-    {
-        if ( isConnected )
-        {
-            try
-            {
-                String insertAgencyRepQuery = "INSERT INTO jos_fb_agencyRep(Agency_ID, Rep_LName,Rep_FName) VALUES (";
-                String temp = insertAgencyRepQuery + "'"
-                    + aAgencyRep.getAgencyID() + "','"
-                    + aAgencyRep.getLastName() + "','"
-                    + aAgencyRep.getFirstName() + "')";
-                stmtR.executeUpdate( temp );
-            }
-            catch ( Exception e )
-            {
-                e.printStackTrace();
-            }
-        }
-        else
-        {
-            addNewAgencyRepDisconnected( aAgencyRep );
-        }
-    }
-
-
-    public void addNewAgencyRepDisconnected( FBAgencyRep aAgencyRep )
-    {
-        try
-        {
-            String insertAgencyRepQuery = "INSERT INTO jos_fb_agencyRep(Agency_ID, Rep_LName,Rep_FName) VALUES (";
-            String temp = insertAgencyRepQuery + "'" + aAgencyRep.getAgencyID()
-                + "','" + aAgencyRep.getLastName() + "','"
-                + aAgencyRep.getFirstName() + "');";
-            File dir = new File( directoryPath );
-            File actualFile = new File( dir, que.que );
-            output = new BufferedWriter( new FileWriter( actualFile, true ) );
-            output.write( temp );
-            output.newLine();
-            output.close();
-        }
-        catch ( Exception e )
-        {
-            System.out.println( "Could not create file" );
-        }
-    }
-
-
-    public void addNewMonthlyDistribution( FBMonthlyDistribution aDistribution )
-    {
-        if ( isConnected )
-        {
-            try
-            {
-                String insertMonthlyDistributionQuery = "INSERT INTO jos_fb_monthlyDist(Customer_ID, Agency_ID,AgencyRep_ID,theDate) VALUES (";
-                String temp = insertMonthlyDistributionQuery + "'"
-                    + aDistribution.getCustomer().getCustomerID() + "','"
-                    + aDistribution.getAgency().getAgencyID() + "','"
-                    + aDistribution.getAgencyRep().getAgencyID() + "','"
-                    + aDistribution.getDate() + "')";
-                stmtR.executeUpdate( temp );
-            }
-            catch ( Exception e )
-            {
-                e.printStackTrace();
-            }
-        }
-    }
-
 
     public boolean isConnected()
     {
