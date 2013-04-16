@@ -25,19 +25,20 @@ public class functions
     static Statement stmt;
 
     static ArrayList<Integer> ids = new ArrayList<Integer>();
-    
-    static Connection connR;
-    
+
     static Connection connL;
-    
+
     static boolean online = false;
-    
-    public functions(Connection R, Connection L){
-        connR = R;
+
+
+    public functions( Connection L )
+    {
         connL = L;
     }
 
-    public static Object[] retrieveUser( int ID, boolean isConnect ) throws NoSuchObjectException
+
+    public static Object[] retrieveUser( int ID, boolean isConnect )
+        throws NoSuchObjectException
     {
         online = isConnect;
         Object returnArray[] = new Object[21];
@@ -50,12 +51,9 @@ public class functions
         try
         {
             Statement statement;
-            if(online){
-                statement = connR.createStatement();
-            }
-            else{
+            
                 statement = connL.createStatement();
-            }
+            
             ResultSet result = statement.executeQuery( request );
             System.out.println( "Got results:" );
             if ( !result.isBeforeFirst() )
@@ -120,38 +118,7 @@ public class functions
     }
 
 
-    public static void delete( boolean isConnect, int id, queryQue que )
-    {
-        System.out.println( "Attempting Delete of id: " + id );
-        try
-        {
-            stmt = connL.createStatement();
-            String query = "Delete from jos_fb_customer Where Customer_ID = " + id
-                + ";";
-
-            stmt.executeUpdate( query );
-            if(isConnect){
-                stmt = connR.createStatement();
-                query = "Delete from jos_fb_customer Where Customer_ID = " + id
-                    + ";";
-
-                stmt.executeUpdate( query );
-            }
-            else
-            {
-                que.addToQue( query );
-            }
-            
-
-        }
-        catch ( SQLException e )
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-    }
-
+   
 
     public static void printableDB( boolean isConnect, String d, Vector v )
     {
@@ -167,12 +134,9 @@ public class functions
         {
             file.createNewFile();
             FBcustomerRS fdbc;
-            if(isConnect){
-                stmt = connR.createStatement();
-            }
-            else{
-            stmt = connL.createStatement();
-            }
+            
+               stmt = connL.createStatement();
+            
             // System.out.println( file );
             BufferedWriter bw;
             bw = new BufferedWriter( new FileWriter( file, true ) );
@@ -187,7 +151,9 @@ public class functions
             {
                 temp = (Vector)v.get( index );
                 // System.out.println( temp );
-                fdbc = new FBcustomerRS( connR, connL, isConnect, (Integer)temp.get( 1 ) );
+                fdbc = new FBcustomerRS(                     connL,
+                    isConnect,
+                    (Integer)temp.get( 1 ) );
                 index++;
                 count++;
                 bw.write( fdbc.getCustomerID() + "," + fdbc.getLastName() + ","
@@ -210,9 +176,17 @@ public class functions
     }
 
 
-    public static void updateCustomer( int ID, Object[] array, boolean isConnect, queryQue que )
+    public static void updateCustomer(
+        int ID,
+        Object[] array,
+        boolean isConnect,
+        queryQue que,
+        Connection connL)
     {
-        String request = new String( "UPDATE `jos_fb_customer` SET `Last_Name` = '"
+        for (int i = 0; i < array.length; i++) {
+            System.out.println(array[i]);
+        }
+        String requestR = new String( "UPDATE `jos_fb_customer` SET `Last_Name` = '"
             + array[2]
             + "', `First_Name` = '"
             + array[3]
@@ -246,21 +220,57 @@ public class functions
             + array[18]
             + ", `Inc_Yearly` = "
             + array[19]
-            + ", `Offender` = '0' WHERE `jos_fb_customer`.`Customer_ID` = " + +ID );
-       
+            + ", `Offender` = '0' WHERE `jos_fb_customer`.`Customer_ID` = "
+            + ID );
+
+        String requestL = new String( "UPDATE `jos_fb_customer` SET `Last_Name` = '"
+            + array[2]
+            + "', `First_Name` = '"
+            + array[3]
+            + "', `Street_Address` = '"
+            + array[4]
+            + "', `City` = '"
+            + array[6]
+            + "', `Zip_Code` = '"
+            + array[7]
+            + "', `Phone_Number` = '"
+            + array[8]
+            + "', `Number_Children` = '"
+            + array[9]
+            + "', `Number_Adults` = '"
+            + array[10]
+            + "', `Number_Seniors` = '"
+            + array[11]
+            + "', `FoodStamps_Snap` = "
+            + ( (Boolean)array[12] ? 1 : 0 )
+            + ", `TANF` = "
+            + ( (Boolean)array[13] ? 1 : 0 )
+            + ", `SSI` = "
+            + ( (Boolean)array[14] ? 1 : 0 )
+            + ", `Medicaid` = "
+            + ( (Boolean)array[15] ? 1 : 0 )
+            + ", `HH_Income` = '"
+            + array[16]
+            + "', `Inc_Weekly` = "
+            + ( (Boolean)array[17] ? 1 : 0 )
+            + ", `Inc_Monthly` = "
+            + ( (Boolean)array[18] ? 1 : 0 )
+            + ", `Inc_Yearly` = "
+            + ( (Boolean)array[19] ? 1 : 0 )
+            + ", `Offender` = '0' WHERE `jos_fb_customer`.`Customer_ID` = "
+            + ID );
+
+        // System.out.println(requestL);
+
         try
         {
             Statement statement;
             statement = connL.createStatement();
-            statement.executeUpdate( request );
-            if(isConnect){
-                statement = connR.createStatement();
-                statement.executeUpdate( request );
-            }
-            else{
-                que.addToQue( request );
-            }
-            
+            statement.executeUpdate( requestL );
+           
+                que.addToQue( requestR );
+           
+
         }
         catch ( SQLException e )
         {
@@ -270,34 +280,30 @@ public class functions
     }
 
 
-    public static Object[] retrieveAgency( int agencyID, boolean isConnect )
+    public static Object[] retrieveAgency( String aAcct_Num, boolean isConnect )
         throws NoSuchObjectException
     {
-        Object returnArray[] = new Object[4];
+        Object returnArray[] = new Object[3];
         int id;
         String account_num, name;
-        String request = new String( "SELECT * FROM jos_fb_agency WHERE Agency_ID =  \""
-            + agencyID + "\"" );
+        String request = new String( "SELECT * FROM jos_fb_agency WHERE Acct_Num =  \""
+            + aAcct_Num + "\"" );
         try
         {
             Statement statement;
-            if(isConnect){
-                statement = connR.createStatement();
-            }
-            else{
+            
                 statement = connL.createStatement();
-            }
+            
             ResultSet result = statement.executeQuery( request );
             if ( !result.isBeforeFirst() )
             {
-                throw new NoSuchObjectException( new String( "The agency with ID:"
-                    + agencyID + " is not in the database" ) );
+                throw new NoSuchObjectException( new String( "The agency with Account Number:"
+                    + aAcct_Num + " is not in the database" ) );
             }
             while ( result.next() )
             {
-                returnArray[1] = id = result.getInt( 1 );
-                returnArray[2] = account_num = result.getString( 2 );
-                returnArray[3] = name = result.getString( 3 );
+                returnArray[1] = account_num = result.getString( 1 );
+                returnArray[2] = name = result.getString( 2 );
             }
 
         }
@@ -315,20 +321,17 @@ public class functions
         throws NoSuchObjectException
     {
         Object returnArray[] = new Object[5];
-        int agent_id, agency_id;
-        String last_name, first_name;
+        int agent_id;
+        String last_name, first_name, acct_num;
         String request = new String( "SELECT * FROM jos_fb_agencyRep WHERE AgencyRep_ID =  \""
             + agentID + "\"" );
         try
         {
             Statement statement;
-            if(isConnect){
-                statement = connR.createStatement();
-            }
-            else{
+           
                 statement = connL.createStatement();
-            }
-            
+           
+
             ResultSet result = statement.executeQuery( request );
             if ( !result.isBeforeFirst() )
             {
@@ -340,7 +343,7 @@ public class functions
             {
                 System.out.println( "Made it" );
                 returnArray[1] = agent_id = result.getInt( 1 );
-                returnArray[2] = agency_id = result.getInt( 2 );
+                returnArray[2] = acct_num = result.getString( 2 );
                 returnArray[3] = last_name = result.getString( 3 );
                 returnArray[4] = first_name = result.getString( 4 );
             }
