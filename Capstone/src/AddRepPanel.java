@@ -198,3 +198,4 @@ public class AddRepPanel extends JFrame {
         JOptionPane.showMessageDialog( this, "Agency Representative failed to be added. \nPlease make sure to fill in all fields" );
     }
 }
+ 
