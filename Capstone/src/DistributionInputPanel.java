@@ -10,11 +10,14 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Scanner;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
@@ -31,7 +34,7 @@ public class DistributionInputPanel extends JFrame {
     private static final long serialVersionUID = 1L;
     //static FBDatabase fbd;
     FeastMainFrame fmf;
-    public static boolean online;
+    public static boolean online, dayboxopen;
     public static Connection connL = null;
     public static Statement stmtL;
     public ResultSet result = null;
@@ -56,11 +59,13 @@ public class DistributionInputPanel extends JFrame {
     static final String SIZE_DATABASE_QUERY = "SELECT COUNT(Customer_ID) FROM jos_fb_customer;";
     private String query = "",prevMonth;
     private int agencySize;
+    queryQue que;
 
-    public DistributionInputPanel(Connection connL2, queryQue que, boolean online2, boolean visible, FeastMainFrame f) {
+    public DistributionInputPanel(Connection connL2, queryQue q, boolean online2, boolean visible, FeastMainFrame f) {
         super("Distribution Input");
         connL = connL2;
         online = online2; 
+        que = q;
         try
         {
             stmtL = connL.createStatement();
@@ -143,6 +148,7 @@ public class DistributionInputPanel extends JFrame {
         panel5 = new JPanel(new FlowLayout());
         panel6 = new JPanel(new FlowLayout());
         
+        dayboxopen = false;
         //JLabels
 
         agencyLabel = new JLabel("Select Agency:*");
@@ -171,6 +177,86 @@ public class DistributionInputPanel extends JFrame {
         mainPage = new JButton("Return to Main Menu");
         
         //Listeners
+        distributionButton.addActionListener( new ActionListener () {
+            public void actionPerformed(ActionEvent e) {
+                try
+                {
+                    result = stmtL.executeQuery("SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '"+agencyBox.getSelectedItem()+"';");
+                    String agencyid = "";
+                    if (result.next()) {
+                        agencyid = result.getString("Acct_Num");
+                    }
+                    System.out.println("RepFirstName: "+agencyRepBox.getSelectedItem().toString().substring( 0, agencyRepBox.getSelectedItem().toString().indexOf( " " ) )+ " RepLastName: "+agencyRepBox.getSelectedItem().toString().substring(agencyRepBox.getSelectedItem().toString().indexOf( " " )+1, agencyRepBox.getSelectedItem().toString().length() ));
+                    result = stmtL.executeQuery("SELECT AgencyRep_ID FROM jos_fb_agencyrep WHERE Rep_FName = '"+agencyRepBox.getSelectedItem().toString().substring( 0, agencyRepBox.getSelectedItem().toString().indexOf( " " ) ) + 
+                        "' AND Rep_LName = '" +agencyRepBox.getSelectedItem().toString().substring(agencyRepBox.getSelectedItem().toString().indexOf( " " )+1, agencyRepBox.getSelectedItem().toString().length() ) + "';");
+                    String agencyrepid = "";
+                    if (result.next()) {
+                        agencyrepid = result.getString( "AgencyRep_ID" );
+                    }
+                    
+                    String date = "" + yearBox.getText()+"-"+monthBox.getSelectedItem()+"-"+dayBox.getSelectedItem();
+                    System.out.println("Acct_Num: "+ agencyid + " Agency_RepID: "+agencyrepid +" Date: "+date);
+                    String customerids = customerBox.getText();
+                    Scanner scan = new Scanner(customerids);
+                    scan.useDelimiter(",");
+                    ArrayList<Integer> customerIDs = new ArrayList<Integer>();
+                    String inserted = "";
+                    String failedcustomerIDs = "";
+                    int in =0;
+                    while (scan.hasNext()){
+                        in = scan.nextInt();
+                        result = stmtL.executeQuery( "SELECT Customer_ID FROM jos_fb_customer WHERE Customer_ID = "+in+";" );
+                        if(result.next()) {
+                            if(inserted == "") {
+                                inserted+=in+"";
+                                customerIDs.add( in );
+                            }
+                            else {
+                                inserted+=", "+in;
+                                customerIDs.add( in );
+                            }
+                        }
+                        else {
+                            if(failedcustomerIDs == "") {
+                                failedcustomerIDs+=in+"";
+                            }
+                            else {
+                                failedcustomerIDs+=", "+in;
+                            }
+                        }
+                        in = 0;
+                    }
+                    
+                    if (!failedcustomerIDs.isEmpty()){
+                        
+                        displayBadCustomerIDDialog(failedcustomerIDs);
+                    }
+                    for (int i = 0; i < customerIDs.size(); i++) {
+                        FBMonthlyDistribution dist = new FBMonthlyDistribution(connL,false, customerIDs.get( i ) ,agencyid,Integer.parseInt(agencyrepid),date, que);
+                        que.addToQue( dist.createQuery() );
+                    }
+                    if (!inserted.isEmpty()){
+                        displayConfirmDialog(inserted);
+                    }
+                    yearBox.setText("");
+                    agencyBox.setSelectedIndex(0);
+                    monthBox.setSelectedIndex(0);
+                    agencyRepBox.setSelectedIndex(0);
+                    customerBox.setText("");
+                    prevMonth = null;
+                    if(dayboxopen) {
+                        panel3.remove( dayLabel );
+                        panel3.remove( dayBox );
+                        dayboxopen = false;
+                    }
+                }
+                catch ( SQLException e1 )
+                {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+            }
+        });
         monthBox.addActionListener(new ActionListener () {
             public void actionPerformed(ActionEvent l) {
                 String m = (String)monthBox.getSelectedItem();
@@ -187,24 +273,26 @@ public class DistributionInputPanel extends JFrame {
                     String[] dayList = {"","01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31"};
                     days = dayList;
                 }
-                if (prevMonth == null || prevMonth == "") {
-                    dayBox = new JComboBox(days);
+                if (prevMonth == null) {
                     panel3.remove(yearLabel);
                     panel3.remove(yearBox);
+                    dayBox = new JComboBox(days);
                     panel3.add(dayLabel,BorderLayout.EAST);
                     panel3.add(dayBox,BorderLayout.EAST);
                     panel3.add(yearLabel,BorderLayout.EAST);
                     panel3.add(yearBox,BorderLayout.EAST);
                     revalidate();
+                    dayboxopen = true;
                 }
                 else if (m == "") {
                     panel3.remove(dayLabel);
                     panel3.remove(dayBox);
                     revalidate();
+                    dayboxopen = false;
                 }
                 else {
+                    panel3.removeAll();
                     dayBox = new JComboBox(days);
-                    panel.removeAll();
                     panel3.add(dateLabel,BorderLayout.EAST);
                     panel3.add(monthLabel,BorderLayout.EAST);
                     panel3.add(monthBox,BorderLayout.EAST);
@@ -213,6 +301,7 @@ public class DistributionInputPanel extends JFrame {
                     panel3.add(yearLabel,BorderLayout.EAST);
                     panel3.add(yearBox,BorderLayout.EAST);
                     revalidate();
+                    dayboxopen = true;
                 }
                 prevMonth = m;
             }
@@ -242,6 +331,11 @@ public class DistributionInputPanel extends JFrame {
                 agencyRepBox.setSelectedIndex(0);
                 customerBox.setText("");
                 prevMonth = null;
+                if(dayboxopen) {
+                    panel3.remove( dayLabel );
+                    panel3.remove( dayBox );
+                    dayboxopen = false;
+                }
             }
         });
         
@@ -268,5 +362,16 @@ public class DistributionInputPanel extends JFrame {
         //panel.add(scroll);
         panel.add(panel6,BorderLayout.SOUTH);
         this.add(panel);
+    }
+    private void displayConfirmDialog(String list)
+    {
+        JOptionPane.showMessageDialog(this,"Distribution's for the following Customers were added!\n"+list);
+    }
+    private void displayFailedDialog() {
+        JOptionPane.showMessageDialog( this, "Distribution failed to be added. \nPlease make sure to fill in all fields" );
+    }
+
+    private void displayBadCustomerIDDialog(String list) {
+        JOptionPane.showMessageDialog( this, "The following are not existing Customers: \n"+list );
     }
 }
