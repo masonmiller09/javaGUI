@@ -37,10 +37,11 @@ public class functions
     }
 
 
-    public static Object[] retrieveUser( int ID, boolean isConnect )
+    public static Object[] retrieveUser( int ID, boolean isConnect, Connection con )
         throws NoSuchObjectException
     {
         online = isConnect;
+        connL = con;
         Object returnArray[] = new Object[21];
         int id, zip, numChildren, numAdults, numSeniors, hhIncome;
         long phone;
