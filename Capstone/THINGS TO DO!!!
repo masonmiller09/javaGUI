@@ -9,3 +9,5 @@ Add agencyRep on advancedsearch
 Change size of pdfGenerator
 Change size of frames so they don't change
 Implement create pdf in SDI form gui(also change button name)
+Implement updating distribution in partial update
+fix timer
