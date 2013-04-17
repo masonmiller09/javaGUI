@@ -44,7 +44,7 @@ public class SDIForm extends JFrame {
 	JButton search, update, populate, insert, mainPage,clearForm;
 	JComboBox agencyBox,agencyRepBox,monthBox,dayBox;
 	private String[] monthList = {"","01","02","03","04","05","06","07","08","09","10","11","12"};
-    private String[] agencyOptions = {"","Agape Cathedral Center","An Acheivable Dream","Andrews Elementary","Beauty for Ashes","Behind the Veil Ministry","Berachah Church","Berkley Village Apartments","Bethel Temple","Booker Elementary","Bread for Life","Buckroe Baptist Church",
+    private String[] agencyOptions/* = {"","Agape Cathedral Center","An Acheivable Dream","Andrews Elementary","Beauty for Ashes","Behind the Veil Ministry","Berachah Church","Berkley Village Apartments","Bethel Temple","Booker Elementary","Bread for Life","Buckroe Baptist Church",
     									"C.H.P. Lafayette Village","C.H.P. Rivermede","C.H.P. Woods @ Yorktown", "Cary Elementary","Checed Warwick","Christ Temple Holiness Church","Coastal Community Church","Deeper Life Assembly","Doris Miller Center","Dunamis Christian Center",
     									"Emmanuel House Inc.","Empowered Believers Christian","First Baptist - Jefferson Park","First Baptist Denbigh","Five Loaves","Forrest Elementary","Garden of Prayer","Gleaning Baptist Church","Greater Bethlehem Christ. As.","Greater Emmanuel Ministries",
     									"Greater Works Ministries","Grove Christian Outreach","Holy Tabernacle Church","Hope House Ministries","Ivy Baptist Church","Ivy Farms Church","JTC Lifechanging Center Inc.","Just-Us-Kidz Inc.","Langley Elementary","Langley Village","Lexington Commons",
@@ -52,8 +52,8 @@ public class SDIForm extends JFrame {
     									"New Hope Baptist Church","New Life Ministry Center","Newport News Housing","Oasis of Life","Open Door Full Gospel","Operation Breaking Through","Peninsula Hispanic SDA","Perfecting Saints Ministries","Pinecroft","Pocahontas Temple","Poquoson",
     									"Salem UMC","Salvation Army (Hampton)","Salvation Army (Williamsburg)","Seton Manor","Smith Elementary","Spirit of Truth Ministries","Sr. Christian Village of E. VA.","St. James Deliverance","St. John Baptist Church","St. Marks UMC","St. Timothy Church",
     									"Surry Community Center 1","Tarrant Elementary","Temple of Life / New Life","Temple of Peace","Temple of Refuge","Triumph Christian Center","Tyler Elementary","W.M. Ratley Road Ahead","Warwick Assembly of God","White Marsh Baptist Church",
-    									"Williamsburg/Blayton Building","Williamsburg/Burnt Ordinary","Williamsburg/Katherine Circle","Williamsburg/Mimosa Woods","Williamsburg/Sylvia Brown","World Outreach Worship Center","YWCA","Zion Prospect Baptist Church"};
-	private String[] agencyRepOptions = {"","Frank Blank","Jaymie Tetreault","John Gregory","John Tester","Mandy Fitzgerald","Riley Little","Walker Riley"};
+    									"Williamsburg/Blayton Building","Williamsburg/Burnt Ordinary","Williamsburg/Katherine Circle","Williamsburg/Mimosa Woods","Williamsburg/Sylvia Brown","World Outreach Worship Center","YWCA","Zion Prospect Baptist Church"}*/;
+	private String[] agencyRepOptions/* = {"","Frank Blank","Jaymie Tetreault","John Gregory","John Tester","Mandy Fitzgerald","Riley Little","Walker Riley"}*/;
     private String prevMonth;
     FeastMainFrame fmf;
     private String AGENCY_QUERY = "SELECT 'Agency_Name' FROM jos_fb_agency ORDER BY Agency_Name ASC;";
@@ -64,17 +64,52 @@ public class SDIForm extends JFrame {
 	Statement stmtL = null;
     public ResultSet result = null;
 	queryQue que;
+    private int agencySize;
 
 	public SDIForm( Connection conL, boolean addN, queryQue q, boolean isConnect, FeastMainFrame f) {
 	    System.out.println("SDI FORM");
 	    addNew = addN;
 	    online = isConnect;
-	    initComponents();
-		setTitle("SDI form");
+	    connL = conL;
+		try
+        {
+            stmtL = connL.createStatement();
+            result = stmtL.executeQuery( "SELECT COUNT(*), Agency_Name FROM jos_fb_agency;" );
+            agencySize = result.getInt(1);
+            System.out.println("agency Size: " + agencySize);
+            agencyOptions = new String[agencySize+1];
+            agencyOptions[0] = "";
+            result = stmtL.executeQuery( "SELECT Agency_Name FROM jos_fb_agency ORDER BY Agency_Name ASC;" );
+            result.next();
+            for(int i = 1; i <= agencySize; i++)
+            {
+                agencyOptions[i] = result.getString( "Agency_Name" );
+                System.out.println("aName: " + agencyOptions[i]);
+                result.next();
+            }
+            result = stmtL.executeQuery( "SELECT COUNT(*), AgencyRep_ID FROM jos_fb_agencyrep;");
+            agencySize = result.getInt(1);
+            System.out.println("agency Size: " + agencySize);
+            agencyRepOptions = new String[agencySize+1];
+            agencyRepOptions[0] = "";
+            result = stmtL.executeQuery( "SELECT Rep_LName, Rep_FName FROM jos_fb_agencyrep ORDER By Rep_FName ASC;");
+            result.next();
+            for (int i = 1; i <= agencySize; i++){
+                agencyRepOptions[i] = result.getString("Rep_FName")+" "+result.getString( "Rep_LName" );
+                System.out.println("aName: " + agencyRepOptions[i]);
+                result.next();
+            }
+        }
+        catch ( SQLException e )
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        initComponents();
+        setTitle("SDI form");
 		fmf = f;
 		setSize(575, 600);
 		setLocationRelativeTo(null);
-		connL = conL;
 		try
         {
             stmtL = connL.createStatement();
@@ -195,7 +230,7 @@ public class SDIForm extends JFrame {
 		// Buttons
 		search = new JButton("Search");
         update = new JButton("Update Customer");
-        populate = new JButton("Populate SDI Form");
+        populate = new JButton("Populate PDF Form");
         insert = new JButton("Add Customer");
         clearForm = new JButton("Clear Form");
         
@@ -215,10 +250,10 @@ public class SDIForm extends JFrame {
 		    idField.setVisible(true);
 		    idField.setEnabled( false );
 		    insert.setVisible(false);
-		    agencyLabel.setVisible(false);
+		    agencyLabel.setVisible(true);
 		    agencyRepLabel.setVisible(false);
 		    dateLabel.setVisible(false);
-		    agencyBox.setVisible(false);
+		    agencyBox.setVisible(true);
 		    agencyRepBox.setVisible(false);
 		    monthLabel.setVisible(false);
 		    monthBox.setVisible(false);
@@ -290,6 +325,58 @@ public class SDIForm extends JFrame {
                        else {
                            displayFailedDialog();
                        }
+                       result = stmtL.executeQuery("SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '"+agencyBox.getSelectedItem()+"';");
+                       String agencyid = "";
+                       if (result.next()) {
+                           agencyid = result.getString("Acct_Num");
+                       }
+                       System.out.println("RepFirstName: "+agencyRepBox.getSelectedItem().toString().substring( 0, agencyRepBox.getSelectedItem().toString().indexOf( " " ) )+ " RepLastName: "+agencyRepBox.getSelectedItem().toString().substring(agencyRepBox.getSelectedItem().toString().indexOf( " " )+1, agencyRepBox.getSelectedItem().toString().length() ));
+                       result = stmtL.executeQuery("SELECT AgencyRep_ID FROM jos_fb_agencyrep WHERE Rep_FName = '"+agencyRepBox.getSelectedItem().toString().substring( 0, agencyRepBox.getSelectedItem().toString().indexOf( " " ) ) + 
+                           "' AND Rep_LName = '" +agencyRepBox.getSelectedItem().toString().substring(agencyRepBox.getSelectedItem().toString().indexOf( " " )+1, agencyRepBox.getSelectedItem().toString().length() ) + "';");
+                       String agencyrepid = "";
+                       if (result.next()) {
+                           agencyrepid = result.getString( "AgencyRep_ID" );
+                       }
+                       result = stmtL.executeQuery("SELECT Customer_ID FROM jos_fb_customer WHERE Last_Name = '"+currentInfo[2]+"' AND First_Name = '"+currentInfo[3]+"' AND Street_Address = '"+currentInfo[4]+"';");
+                       int customerid = 0;
+                       if (result.next()) {
+                           customerid = result.getInt( "Customer_ID" );
+                       }
+                       String date = "" + yearBox.getText()+"-"+monthBox.getSelectedItem()+"-"+dayBox.getSelectedItem();
+                       System.out.println("Acct_Num: "+ agencyid + " Agency_RepID: "+agencyrepid +" Date: "+date);
+                       FBMonthlyDistribution dist = new FBMonthlyDistribution(connL,false, customerid ,agencyid,Integer.parseInt(agencyrepid),date, que);
+                       que.addToQue( dist.createQuery() );
+                       result = stmtL.executeQuery("SELECT Customer_ID, theDate FROM jos_fb_monthlydist WHERE Customer_ID = "+customerid+" AND theDate = '"+date+"';");
+                       if (result.next()){
+                           displayConfirmDialog();
+                       }
+                       else {
+                           displayFailedDialog();
+                       }
+                       firstNameField.setText("");
+                       lastNameField.setText("");
+                       addressField.setText("");
+                       apartmentNumberField.setText("");
+                       cityField.setText("");
+                       zipField.setText("");
+                       phoneField.setText("");
+                       numChildrenField.setText("");
+                       numAdultsField.setText("");
+                       numSeniorsField.setText("");
+                       totInHouseholdField.setText("");
+                       hhIncomeField.setText("");
+                       idField.setText("");
+                       yearBox.setText("");
+                       foodstamps.setSelected(false);
+                       tanf.setSelected(false);
+                       ssi.setSelected(false);
+                       medicaid.setSelected(false);
+                       weekly.setSelected(false);
+                       monthly.setSelected(false);
+                       annually.setSelected(false);
+                       agencyBox.setSelectedIndex(0);
+                       agencyRepBox.setSelectedIndex(0);
+                       monthBox.setSelectedIndex(0);
                    }
                    catch ( NumberFormatException e )
                     {
@@ -383,6 +470,7 @@ public class SDIForm extends JFrame {
 		populate.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+			    
 				String id = idField.getText();
 				int one = 1;
 				if (id.equals("")) {
@@ -390,19 +478,35 @@ public class SDIForm extends JFrame {
 							"Please, enter a customer ID",
 							"Customer Search Error",
 							JOptionPane.INFORMATION_MESSAGE);
-				} else {
+				}
+
+				else if(agencyBox.getSelectedItem().equals(""))
+				{
+				    JOptionPane.showMessageDialog(null,
+                        "Please, select an Agency",
+                        "Generate PDF Error",
+                        JOptionPane.INFORMATION_MESSAGE);
+				}
+				else {
 					try {
-					        String acctNum = "2843";
-					        currentInfo = functions.retrieveUser(Integer.parseInt(id), online);
+					        result = stmtL.executeQuery( "SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agencyBox.getSelectedItem() + "';" );
+					        String acctNum = "";
+					        Object[] agencyInfo = new Object[2];
+					        if(result.next())
+					        {
+					            acctNum = result.getString( "Acct_Num" );
+					            agencyInfo[0] = acctNum;
+					            agencyInfo[1] = agencyBox.getSelectedItem();
+					        }
+					        currentInfo = functions.retrieveUser(Integer.parseInt(id), online, connL);
 	                       // System.out.println("Retrieving Agency");
-	                        Object [] agencyInfo = functions.retrieveAgency(acctNum, online);
 	                       // System.out.println("Retrieving Agent");
-	                        Object [] agentInfo = functions.retrieveAgent(one, online);
 					   
-						PdfGenerator.populateSDIForm(currentInfo,agencyInfo,agentInfo);
+						PdfGenerator.populateSDIForm(currentInfo, agencyInfo);
 					} 
 					catch (NoSuchObjectException o) {
 						// TODO Auto-generated catch block
+					    o.printStackTrace();
 						JOptionPane.showMessageDialog(null,
 								"There is no user: \"" + id
 										+ "\" in the database",
@@ -413,6 +517,11 @@ public class SDIForm extends JFrame {
 						// TODO Auto-generated catch block
 						o.printStackTrace();
 					}
+                    catch ( SQLException m )
+                    {
+                        // TODO Auto-generated catch block
+                        m.printStackTrace();
+                    }
 				}
 			}
 		});
@@ -451,10 +560,10 @@ public class SDIForm extends JFrame {
 	                revalidate();
 		    	}
 		    	else {
-			    	dayBox = new JComboBox(days);
 		    		panelRow11.remove(yearLabel);
 					panelRow11.remove(yearBox);
 					panelRow11.remove(dayBox);
+                    dayBox = new JComboBox(days);
 					dayLabel.setVisible(true);
 					panelRow11.add(dayBox);
 					panelRow11.add(yearLabel);
@@ -511,6 +620,7 @@ public class SDIForm extends JFrame {
 				monthly.setSelected(false);
 				annually.setSelected(false);
 				agencyBox.setSelectedIndex(0);
+				agencyRepBox.setSelectedIndex(0);
 				monthBox.setSelectedIndex(0);
 		    }
 		});
