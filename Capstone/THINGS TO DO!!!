@@ -11,3 +11,4 @@ Change size of frames so they don't change
 Implement create pdf in SDI form gui
 Implement updating distribution in partial update
 fix timer
+Fix Customer Search panel column names
