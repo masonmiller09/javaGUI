@@ -434,6 +434,7 @@ public class FBDatabase
         for ( int i = 0; i < queries.size(); i++ )
         {
             temp = queries.get( i );
+            System.out.println("Query being ran: " + temp);
             try
             {
                 stmtR = connR.createStatement();
@@ -447,6 +448,7 @@ public class FBDatabase
             }
 
         }
+        queries.clear();
     }
 
 
@@ -544,7 +546,7 @@ public class FBDatabase
                 prepMD.setInt( 1, rsR.getInt( "Customer_ID" ) );
                 prepMD.setString( 2, rsR.getString( "Acct_Num" ) );
                 prepMD.setInt( 3, rsR.getInt( "AgencyRep_ID" ) );
-                prepMD.setDate( 4, rsR.getDate( "theDate" ) );
+                prepMD.setString( 4, rsR.getString( "theDate" ) );
                 prepMD.addBatch();
             }
             connL.setAutoCommit( false );
