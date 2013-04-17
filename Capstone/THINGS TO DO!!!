@@ -1,0 +1,10 @@
+Make only AgnecyReps for only specific agency popup
+Disable angecyRep until a agency is selected
+Implement queue throughout all classes
+Implement log throughout all classes
+Fix scroll bar on tables (advanced search, generatePDF, distribution input)
+Implement offender
+Add logo and other flashiness
+Add agencyRep on advancedsearch
+Change size of pdfGenerator
+Change size of frames so they don't change
