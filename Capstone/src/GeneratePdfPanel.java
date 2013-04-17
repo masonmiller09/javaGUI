@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.rmi.NoSuchObjectException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -18,6 +19,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -37,8 +39,8 @@ public class GeneratePdfPanel extends JFrame {
     //static FBDatabase fbd;
     public static boolean online;
     public static Connection connL = null;
-    public static Connection connR = null;
     public ResultSet result = null;
+    public Statement stmtL;
     FeastMainFrame fmf;
     private int numberOfRows;
     private PDFTableModel model;
@@ -48,7 +50,9 @@ public class GeneratePdfPanel extends JFrame {
     JLabel agencyLabel,descriptionLabel;
     JButton searchButton,pdfButton,mainPage;
     JComboBox agencyBox;
-    private String[] agencyOptions = {"","Agape Cathedral Center","An Acheivable Dream","Andrews Elementary","Beauty for Ashes","Behind the Veil Ministry","Berachah Church","Berkley Village Apartments","Bethel Temple","Booker Elementary","Bread for Life","Buckroe Baptist Church",
+    int agencySize, population;
+    private Object[] currentInfo;
+    private String[] agencyOptions/* = {"","Agape Cathedral Center","An Acheivable Dream","Andrews Elementary","Beauty for Ashes","Behind the Veil Ministry","Berachah Church","Berkley Village Apartments","Bethel Temple","Booker Elementary","Bread for Life","Buckroe Baptist Church",
             "C.H.P. Lafayette Village","C.H.P. Rivermede","C.H.P. Woods @ Yorktown", "Cary Elementary","Checed Warwick","Christ Temple Holiness Church","Coastal Community Church","Deeper Life Assembly","Doris Miller Center","Dunamis Christian Center",
             "Emmanuel House Inc.","Empowered Believers Christian","First Baptist - Jefferson Park","First Baptist Denbigh","Five Loaves","Forrest Elementary","Garden of Prayer","Gleaning Baptist Church","Greater Bethlehem Christ. As.","Greater Emmanuel Ministries",
             "Greater Works Ministries","Grove Christian Outreach","Holy Tabernacle Church","Hope House Ministries","Ivy Baptist Church","Ivy Farms Church","JTC Lifechanging Center Inc.","Just-Us-Kidz Inc.","Langley Elementary","Langley Village","Lexington Commons",
@@ -56,10 +60,11 @@ public class GeneratePdfPanel extends JFrame {
             "New Hope Baptist Church","New Life Ministry Center","Newport News Housing","Oasis of Life","Open Door Full Gospel","Operation Breaking Through","Peninsula Hispanic SDA","Perfecting Saints Ministries","Pinecroft","Pocahontas Temple","Poquoson",
             "Salem UMC","Salvation Army (Hampton)","Salvation Army (Williamsburg)","Seton Manor","Smith Elementary","Spirit of Truth Ministries","Sr. Christian Village of E. VA.","St. James Deliverance","St. John Baptist Church","St. Marks UMC","St. Timothy Church",
             "Surry Community Center 1","Tarrant Elementary","Temple of Life / New Life","Temple of Peace","Temple of Refuge","Triumph Christian Center","Tyler Elementary","W.M. Ratley Road Ahead","Warwick Assembly of God","White Marsh Baptist Church",
-            "Williamsburg/Blayton Building","Williamsburg/Burnt Ordinary","Williamsburg/Katherine Circle","Williamsburg/Mimosa Woods","Williamsburg/Sylvia Brown","World Outreach Worship Center","YWCA","Zion Prospect Baptist Church"};
+            "Williamsburg/Blayton Building","Williamsburg/Burnt Ordinary","Williamsburg/Katherine Circle","Williamsburg/Mimosa Woods","Williamsburg/Sylvia Brown","World Outreach Worship Center","YWCA","Zion Prospect Baptist Church"}*/;
     private String query = "";
-    
+    private String Aname ="";
     static final String INITIAL_QUERY = "SELECT Customer_ID, First_Name, Last_Name, City, Zip_Code, Phone_Number FROM jos_fb_customer WHERE Customer_ID = 'a';";
+    
     static final String SIZE_DATABASE_QUERY = "SELECT COUNT(Customer_ID) FROM jos_fb_customer;";
     
     
@@ -67,6 +72,27 @@ public class GeneratePdfPanel extends JFrame {
         super("PDF Generator");
         connL = connL2;
         online = online2;
+        try
+        {
+            stmtL = connL.createStatement();
+            result = stmtL.executeQuery( "SELECT COUNT(*), Agency_Name FROM jos_fb_agency;" );
+            agencySize = result.getInt(1);
+            System.out.println("agency Size: " + agencySize);
+            agencyOptions = new String[agencySize+1];
+            agencyOptions[0] = "";
+            result = stmtL.executeQuery( "SELECT Agency_Name FROM jos_fb_agency ORDER BY Agency_Name ASC;" );
+            result.next();
+            for(int i = 1; i <= agencySize; i++)
+            {
+                agencyOptions[i] = result.getString( "Agency_Name" );
+                result.next();
+            }
+        }
+        catch ( SQLException e )
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         fmf = f;
         setSize(650,150);
         initComponents();
@@ -129,7 +155,7 @@ public class GeneratePdfPanel extends JFrame {
         mainPage = new JButton("Return to Main Menu");
         
         //table
-        model = new PDFTableModel( connR, connL, online, INITIAL_QUERY );
+        model = new PDFTableModel( connL, online, INITIAL_QUERY, "SELECT COUNT(*), Customer_ID FROM jos_fb_customer WHERE Customer_ID = 'a'" );
         JTable table = new JTable(model);
         table.setPreferredSize(new Dimension(getWidth(),200));
         table.setFont(new Font("Times New Roman", Font.PLAIN, 14));
@@ -157,13 +183,97 @@ public class GeneratePdfPanel extends JFrame {
             public void actionPerformed(ActionEvent e)
             {
                 String agency = (String)agencyBox.getSelectedItem();
+                Aname = agency;
+                System.out.println("Aname: "+Aname);
+                String agencyonlyquery = "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, jos_fb_monthlydist.theDate, jos_fb_monthlydist.Acct_Num FROM jos_fb_monthlydist " +
+                "INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + Aname + "') AND jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID ORDER BY jos_fb_monthlydist.theDate DESC, jos_fb_customer.Last_Name ASC;";
+            String requery = "SELECT COUNT(*), Customer_ID FROM jos_fb_monthlydist WHERE Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '"+Aname+"');";
                 setSize(650,300);
                 scroll.setVisible(true);
                 pdfButton.setVisible(true);
-                model.setQuery( "SELECT * FROM jos_fb_agency WHERE Agency_Name = \'"+agency+"\'");
+                model.setQuery( agencyonlyquery, requery);
             }
         });
-        
+        pdfButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                int move;
+                try
+                {
+                    move = selected.get(0);
+                    String SELECT_ONE_ROW = "SELECT * FROM jos_fb_customer LIMIT 1 OFFSET "
+                        + move + ";";
+                    result = stmtL.executeQuery(SELECT_ONE_ROW);
+                    for(int i = 0; i < selected.size(); i++)
+                    {
+                        System.out.println("indexes: " + selected.get(i));
+                    }
+                    System.out.println("move: " + move);
+                }
+                catch(SQLException e2)
+                {
+                    e2.printStackTrace();
+                }
+                for(int i = 0; i < numberOfRows; i++)
+                {
+                    try
+                    {
+                        if(selected != null)
+                        {
+                            for(int j = 0; j < selected.size(); j++)
+                            {
+                                if(result.getRow() == selected.get(j))
+                                {
+                                    Integer id = (Integer)result.getInt(1);
+                                    System.out.println("Customer ID " + id);
+                                    String acct_num = "2843";
+                                    int one = 1;
+                                    try
+                                    {
+                                        currentInfo = functions.retrieveUser( id,
+                                            online , connL);
+                                        System.out.println( "Retrieving Agency" );
+                                        Object[] agencyInfo = functions.retrieveAgency( acct_num,
+                                            online );
+                                        System.out.println( "Retrieving Agent" );
+                                        Object[] agentInfo = functions.retrieveAgent( one,
+                                            online );
+                                        PdfGenerator.populateSDIForm( currentInfo,
+                                            agencyInfo,
+                                            agentInfo,
+                                            population );
+                                        population++;
+                                    }
+                                    catch ( NoSuchObjectException o )
+                                    {
+                                        // TODO Auto-generated catch block
+                                        JOptionPane.showMessageDialog( null,
+                                            "There is no user: \"" + id
+                                            + "\" in the database",
+                                            "Customer Search Error",
+                                            JOptionPane.INFORMATION_MESSAGE );
+                                    }
+                                    catch ( NumberFormatException o )
+                                    {
+                                        // TODO Auto-generated catch block
+                                        o.printStackTrace();
+                                    }
+                                }
+                            }
+                        }
+                        result.next();
+                    }
+                    catch(Exception b)
+                    {
+                        b.printStackTrace();
+                    }
+                }
+                PdfGenerator.mergePdfFiles(population);
+                population = 0;
+            }
+        });
         panel1.add(descriptionLabel,BorderLayout.EAST);
         panel1.add(agencyLabel,BorderLayout.EAST);
         panel1.add(agencyBox,BorderLayout.EAST);
@@ -183,22 +293,19 @@ public class GeneratePdfPanel extends JFrame {
         /**
          * 
          */
-        private Statement stmtL;
-
-        private Statement stmtR;
-
         private ResultSetMetaData metaData;
 
         private boolean connectedToDatabase = false;
 
         private static final long serialVersionUID = 1L;
-
-
+        ArrayList<String> ids = new ArrayList<String>();
+        
+        //boolean first = false;
+        
         public PDFTableModel(
-            Connection connR,
             Connection connL,
             boolean online,
-            String query1 )
+            String query1, String rcQuery )
         {
             connectedToDatabase = online;
             try
@@ -206,13 +313,8 @@ public class GeneratePdfPanel extends JFrame {
                 System.out.println( "Test connection local: "
                     + connL.toString() );
                 stmtL = connL.createStatement();
-                if ( connectedToDatabase )
-                {
-                    System.out.println("Here");
-                    stmtR = connR.createStatement();
-                }
                 query = query1;
-                setQuery( query );
+                setQuery( query1, rcQuery );
             }
             catch ( SQLException e )
             {
@@ -223,27 +325,32 @@ public class GeneratePdfPanel extends JFrame {
         }
 
 
-        private void setQuery( String query1 )
+        private void setQuery( String query2, String reqCount )
         {
             try
             {
-                System.out.println("IM SETTING A QUERY: "+query);
+                System.out.println("IM SETTING A QUERY B4: "+ query);
                 System.out.println("Set Query");
-                query = query1;
-                if ( online )
-                {
-                    result = stmtR.executeQuery( query );
-                    metaData = result.getMetaData();
-                    result.last();
-                    numberOfRows = result.getRow();
-                }
-                else
-                {
-                    result = stmtL.executeQuery( SIZE_DATABASE_QUERY );
+                query = query2;
+                System.out.println("IM SETTING A QUERY After: "+ query);
+                ids.clear();
+                System.out.println("reqCount: "+reqCount);
+                    result = stmtL.executeQuery( reqCount );
                     numberOfRows = result.getInt( 1 );
+                    System.out.println("numRows: " + numberOfRows);
                     result = stmtL.executeQuery( query );
+                  
+                    while(result.next())
+                    {
+                        //this is for agencies not customers
+                            //System.out.println("Set to a distribution query");
+                            String temp = result.getString("Customer_ID");
+                            System.out.println(result.getString("Customer_ID") + "," + result.getString("Last_Name") + "," + result.getString("First_Name") + "," + result.getString("theDate") + "," + result.getString("Acct_Num"));
+                            ids.add(temp);
+                    }
+                    //first = true;
+                    result = stmtL.executeQuery( query );                  
                     metaData = result.getMetaData();
-                }
 
                 fireTableStructureChanged();
                 
@@ -259,6 +366,7 @@ public class GeneratePdfPanel extends JFrame {
         {
             try
             {
+               // System.out.println("getting column count: "+metaData.getColumnCount());
                 return metaData.getColumnCount();
             }
             catch ( Exception e )
@@ -272,12 +380,14 @@ public class GeneratePdfPanel extends JFrame {
         @Override
         public int getRowCount()
         {
+            //Number of rows is the whole database
+            //System.out.println("getting row count: "+numberOfRows);
             return numberOfRows;
         }
 
 
         @Override
-        public String getColumnName( int column ) throws IllegalStateException
+        public String getColumnName( int column )
         {
             try
             {
@@ -296,21 +406,44 @@ public class GeneratePdfPanel extends JFrame {
         {
             try
             {
-                if ( online )
-                {
-                    result = stmtR.executeQuery( query );
-                    result.absolute( r + 1 );
-                }
-                else
-                {
+               System.out.println("r: " + r + "; col: " + col);
+                String temp = "";
+                    if((r < ids.size() && result.getRow() != ids.size()+1) || (result.getRow() == 1 && ids.size() == 1)){
+                    //String SELECT_ONE_ROW = "SELECT Customer_ID, Last_Name, First_Name, Street_Address, City, Zip_Code, Phone_Number FROM jos_fb_customer WHERE Customer_ID = ";
+                    System.out.println("Im here");
+                   
+                    if(col == 1){
+                        System.out.println("Im here at col =1");
+                        return result.getString("Last_Name");
+                    }
+                    else if(col == 2)
+                    {
+                        System.out.println("Im here at col = 2");
+                        return result.getString("First_Name");
+                    }
+                    else if(col == 3)
+                    {
+                        System.out.println("Im here at col = 3");
+                        return result.getString("theDate");
+                    }
+                    else if(col == 4)
+                    {
+                        System.out.println("Im here at col = 4");
+                        return result.getString("Acct_Num");
+                    }
+                    else if(col > 4)
+                    {
+                       return "";
+                    }
+                    
+                    result.next();
+                    return  result.getObject( col + 1  );
+                      //  temp = ids.get(r);
+                    //result = stmtL.executeQuery( SELECT_ONE_ROW + "'" + temp + "';" );
+                    //return result.getObject( col + 1  );
+                    }
+                    return "";
 
-                    String SELECT_ONE_ROW = "SELECT * FROM jos_fb_customer LIMIT 1 OFFSET "
-                        + r + ";";
-                    result = stmtL.executeQuery( SELECT_ONE_ROW );
-                }
-
-                // System.out.println(r+1);
-                return result.getObject( col + 1 );
             }
             catch ( Exception e )
             {
@@ -320,7 +453,7 @@ public class GeneratePdfPanel extends JFrame {
         }
 
 
-        public Class getColumnClass( int c ) throws IllegalStateException
+        public Class getColumnClass( int c )
         {
             try
             {
@@ -343,7 +476,7 @@ public class GeneratePdfPanel extends JFrame {
             }
             else
             {
-                return true;
+                return false;
             }
         }
     }
@@ -368,13 +501,11 @@ public class GeneratePdfPanel extends JFrame {
                 {
                     if ( lsm.isSelectedIndex( i ) )
                     {
-                        output += ( " " + i );
                         selected.add( i + 1 );
+                        System.out.println("Selected " + selected.get( i+1 ));
                     }
                 }
             }
-            output += "\n";
-            System.out.println( output );
         }
     }
 }
