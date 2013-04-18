@@ -1,17 +1,32 @@
-Make only AgnecyReps for only specific agency popup
-Disable angecyRep until a agency is selected
-Implement queue throughout all classes
-Implement log throughout all classes
-DONE - Fix scroll bar on tables (advanced search, generatePDF, distribution input)
-Implement offender
-Add logo and other flashiness
-Add agencyRep on advancedsearch
-DONE - Change size of pdfGenerator
-Change size of frames so they don't change
-Implement create pdf in SDI form gui
-Implement updating distribution in partial update
-fix timer
+Urgent and Important:
 Fix Customer Search panel column names
 Make at least one of the Govt. assitance options necessary for a customer.
 Add semi colons to all queries in the object classes(FBcustomerRS, FBAgency...)
+Test Print an SDI form.
+fix Merged PDF form
+fix timer
+Make only AgnecyReps for only specific agency popup
+Disable angecyRep until a agency is selected
+Implement queue throughout all classes
+
+
+Important:
+Add agencyRep on advancedsearch
+Implement log throughout all classes
+Implement updating distribution in partial update
+
+
+Would Be Nice:
+Implement offender
+Add logo and other flashiness
+Change size of frames so they don't change
 When Online database is updated do a pop up showing what was added or updated ( Only at initial connect).
+
+DONE:
+DONE - Fix scroll bar on tables (advanced search, generatePDF, distribution input)
+DONE - Change size of pdfGenerator
+DONE - Implement create pdf in SDI form gui
+
+
+
+
