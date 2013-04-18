@@ -24,6 +24,8 @@ public class FBcustomerRS
     private ResultSet rsL = null;
 
     private Statement stmtL = null;
+    
+    public queryQue que;
 
 
     // creates new customer
@@ -49,12 +51,12 @@ public class FBcustomerRS
         int aIncWeekly,
         int aIncMonthly,
         int aIncYearly,
-        int aOffender ) throws SQLException
+        int aOffender, queryQue q ) throws SQLException
     {
         // connR = aConnR;
         connL = aConnL;
         isConnected = aIsConnected;
-
+        que = q;
         PreparedStatement prepL = connL.prepareStatement( "insert into jos_fb_customer values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" );
         String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = (SELECT MAX(Customer_ID) FROM jos_fb_customer);";
         stmtL = connL.createStatement();
@@ -144,7 +146,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID + ";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
@@ -167,7 +169,8 @@ public class FBcustomerRS
         {
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET First_Name= '"
-                + aFirstName + "' WHERE Customer_ID=" + customer_ID;
+                + aFirstName + "' WHERE Customer_ID=" + customer_ID + ";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             return sql;
@@ -186,7 +189,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID + ";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             //rsL.next();
@@ -209,7 +212,8 @@ public class FBcustomerRS
         {
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET Last_Name= '" + aLastName
-                + "' WHERE Customer_ID=" + customer_ID;
+                + "' WHERE Customer_ID=" + customer_ID + ";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             return sql;
@@ -230,7 +234,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID + ";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
@@ -254,7 +258,8 @@ public class FBcustomerRS
         {
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET Street_Address= '"
-                + aAddress + "' WHERE Customer_ID=" + customer_ID;
+                + aAddress + "' WHERE Customer_ID=" + customer_ID + ";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             return sql;
@@ -275,7 +280,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID + ";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
@@ -299,7 +304,8 @@ public class FBcustomerRS
         {
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET Apartment_Number= '"
-                + aAptNum + "' WHERE Customer_ID=" + customer_ID;
+                + aAptNum + "' WHERE Customer_ID=" + customer_ID + ";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             return sql;
@@ -320,7 +326,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID + ";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
@@ -344,7 +350,8 @@ public class FBcustomerRS
         {
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET City= '" + aCity
-                + "' WHERE Customer_ID=" + customer_ID;
+                + "' WHERE Customer_ID=" + customer_ID + ";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             return sql;
@@ -365,7 +372,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID + ";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
@@ -389,7 +396,8 @@ public class FBcustomerRS
         {
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET Zip_Code= '" + aZipCode
-                + "' WHERE Customer_ID=" + customer_ID;
+                + "' WHERE Customer_ID=" + customer_ID + ";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             return sql;
@@ -410,7 +418,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID + ";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
@@ -434,7 +442,8 @@ public class FBcustomerRS
         {
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET Phone_Number= '"
-                + aPhoneNum + "' WHERE Customer_ID=" + customer_ID;
+                + aPhoneNum + "' WHERE Customer_ID=" + customer_ID + ";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             return sql;
@@ -455,7 +464,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID + ";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
@@ -479,7 +488,8 @@ public class FBcustomerRS
         {
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET Number_Children= '"
-                + aNumChildren + "' WHERE Customer_ID=" + customer_ID;
+                + aNumChildren + "' WHERE Customer_ID=" + customer_ID + ";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             setTotal_Household();
@@ -501,7 +511,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID + ";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
@@ -525,7 +535,8 @@ public class FBcustomerRS
         {
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET Number_Adults= '"
-                + aNumAdults + "' WHERE Customer_ID=" + customer_ID;
+                + aNumAdults + "' WHERE Customer_ID=" + customer_ID + ";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             setTotal_Household();
@@ -547,7 +558,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID + ";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
@@ -571,7 +582,8 @@ public class FBcustomerRS
         {
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET Number_Seniors= '"
-                + aNumSeniors + "' WHERE Customer_ID=" + customer_ID;
+                + aNumSeniors + "' WHERE Customer_ID=" + customer_ID + ";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             setTotal_Household();
@@ -593,7 +605,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID + ";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
@@ -618,7 +630,8 @@ public class FBcustomerRS
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET Total_Household= '"
                 + ( getNum_Children() + getNum_Adults() + getNum_Seniors() )
-                + "' WHERE Customer_ID=" + customer_ID;
+                + "' WHERE Customer_ID=" + customer_ID + ";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             return sql;
@@ -639,7 +652,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID+";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
@@ -663,7 +676,8 @@ public class FBcustomerRS
         {
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET FoodStamps_SNAP= '"
-                + aFoodStamps + "' WHERE Customer_ID=" + customer_ID;
+                + aFoodStamps + "' WHERE Customer_ID=" + customer_ID+";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             return sql;
@@ -684,7 +698,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID+";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
@@ -708,7 +722,8 @@ public class FBcustomerRS
         {
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET TANF= '" + aTANF
-                + "' WHERE Customer_ID=" + customer_ID;
+                + "' WHERE Customer_ID=" + customer_ID+";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             return sql;
@@ -729,7 +744,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID+";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
@@ -753,7 +768,8 @@ public class FBcustomerRS
         {
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET SSI= '" + aSSI
-                + "' WHERE Customer_ID=" + customer_ID;
+                + "' WHERE Customer_ID=" + customer_ID+";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             return sql;
@@ -774,7 +790,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID+";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
@@ -798,7 +814,8 @@ public class FBcustomerRS
         {
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET Medicaid= '" + aMedicaid
-                + "' WHERE Customer_ID=" + customer_ID;
+                + "' WHERE Customer_ID=" + customer_ID+";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             return sql;
@@ -819,7 +836,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID+";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
@@ -843,7 +860,8 @@ public class FBcustomerRS
         {
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET HH_Income= '" + aHh_Income
-                + "' WHERE Customer_ID=" + customer_ID;
+                + "' WHERE Customer_ID=" + customer_ID+";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             return sql;
@@ -864,7 +882,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID+";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
@@ -888,7 +906,8 @@ public class FBcustomerRS
         {
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET Inc_Monthly= '"
-                + aInc_Monthly + "' WHERE Customer_ID=" + customer_ID;
+                + aInc_Monthly + "' WHERE Customer_ID=" + customer_ID+";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             return sql;
@@ -909,7 +928,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID+":";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
@@ -933,7 +952,8 @@ public class FBcustomerRS
         {
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET Inc_Weekly= '"
-                + aIncWeekly + "' WHERE Customer_ID=" + customer_ID;
+                + aIncWeekly + "' WHERE Customer_ID=" + customer_ID+";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             return sql;
@@ -954,7 +974,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID+";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
@@ -978,7 +998,8 @@ public class FBcustomerRS
         {
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET Inc_Yearly= '"
-                + aIncYearly + "' WHERE Customer_ID=" + customer_ID;
+                + aIncYearly + "' WHERE Customer_ID=" + customer_ID+";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             return sql;
@@ -999,7 +1020,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID;
+                + customer_ID+";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
@@ -1022,7 +1043,8 @@ public class FBcustomerRS
         {
             connL.setAutoCommit( true );
             String sql = "UPDATE jos_fb_customer SET Offender= '" + aOffender
-                + "' WHERE Customer_ID=" + customer_ID;
+                + "' WHERE Customer_ID=" + customer_ID+";";
+            que.addToQue( sql );
             PreparedStatement st = connL.prepareStatement( sql );
             st.execute();
             return sql;
