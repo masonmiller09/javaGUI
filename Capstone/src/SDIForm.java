@@ -1,4 +1,3 @@
-
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -313,7 +312,7 @@ public class SDIForm extends JFrame {
                               ( (Boolean) currentInfo[17]? 1:0),
                               ( (Boolean) currentInfo[18]? 1:0),
                               ( (Boolean) currentInfo[19]? 1:0),
-                              ( (Boolean) currentInfo[20]? 1:0));
+                              ( (Boolean) currentInfo[20]? 1:0), que);
                        que.addToQue( fbc.getCreateCustomerQuery());
                        System.out.println("First Name: "+currentInfo[3]+" Last Name: "+currentInfo[2]);
                        String q = "SELECT * FROM jos_fb_customer WHERE First_Name = '"+currentInfo[3]+"' AND Last_Name = '"+currentInfo[2]+"';";
