@@ -60,9 +60,9 @@ public class AdvancedSearchPanel extends JFrame {
     private String[] monthList = {"","01","02","03","04","05","06","07","08","09","10","11","12"};
     private String[] agencyOptions;
     public int agencySize = 0;
-    static final String INITIAL_QUERY = "SELECT Customer_ID, First_Name, Last_Name, Street_Address, City, Zip_Code, Phone_Number FROM jos_fb_customer ORDER BY Customer_ID ASC;";
-    static final String INITIAL_QUERY_COUNT = "SELECT COUNT(*), Customer_ID, First_Name, Last_Name, Street_Address, City, Zip_Code, Phone_Number FROM jos_fb_customer ORDER BY Customer_ID ASC;";
-    static final String SIZE_DATABASE_QUERY = "SELECT COUNT(Customer_ID) FROM jos_fb_customer;";
+    static final String INITIAL_QUERY = "SELECT Customer_ID, First_Name, Last_Name, Street_Address, City, Zip_Code, Phone_Number FROM jos_fb_customer ORDER BY Customer_ID ASC";
+    static final String INITIAL_QUERY_COUNT = "SELECT COUNT(*), Customer_ID, First_Name, Last_Name, Street_Address, City, Zip_Code, Phone_Number FROM jos_fb_customer;";
+    static final String SIZE_DATABASE_QUERY = "SELECT COUNT(*), Customer_ID FROM jos_fb_customer;";
     private String query = "",prevMonth;
     public String Aname = "";
     public String AGENCY_SEARCH_QUERY = "SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = ";
@@ -104,7 +104,7 @@ public class AdvancedSearchPanel extends JFrame {
             System.out.println("agency Size: " + agencySize);
             agencyOptions = new String[agencySize+1];
             agencyOptions[0] = "";
-            result = stmtL.executeQuery( "SELECT Agency_Name FROM jos_fb_agency ORDER BY Agency_Name ASC;" );
+            result = stmtL.executeQuery( "SELECT Agency_Name FROM jos_fb_agency ORDER BY Agency_Name ASC" );
             result.next();
             for(int i = 1; i <= agencySize; i++)
             {
@@ -197,6 +197,7 @@ public class AdvancedSearchPanel extends JFrame {
         table.setSelectionModel( listModel );
         table.setPreferredScrollableViewportSize( (new Dimension(getWidth()-80,getHeight()/4))) ;
         table.setFillsViewportHeight( true );
+        table.setAutoResizeMode( JTable.AUTO_RESIZE_ALL_COLUMNS );
         
         panel1.add(agencyLabel,BorderLayout.EAST);
         panel1.add(agencyBox,BorderLayout.EAST);
@@ -270,42 +271,42 @@ public class AdvancedSearchPanel extends JFrame {
                     System.out.println("cid: "+ cid + " ag: " + ag + " mo: " + mo + " ye: " + ye);
                     if(cid && !ag && !mo && !ye)
                     {
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.Customer_ID = " + customerid + " ORDER BY jos_fb_customer.Customer_ID ASC;",
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.Customer_ID = " + customerid + " ORDER BY jos_fb_customer.Customer_ID ASC",
                             "SELECT COUNT(*), Customer_ID FROM jos_fb_monthlydist WHERE Customer_ID = "+ customerid + ";");
                     }
                     //THe Customer_ID and the agency
                     else if(cid && ag && !mo && !ye)
                     {
                       //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.Customer_ID = "+ customerid + " AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_monthlydist.Customer_ID ASC;"
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.Customer_ID = "+ customerid + " AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_monthlydist.Customer_ID ASC"
                             ,"SELECT COUNT(*), jos_fb_monthlydist.Customer_ID FROM jos_fb_monthlydist WHERE jos_fb_monthlydist.Customer_ID = "+ customerid + " AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "');");
                     }
                     //The Customer_ID, the agency and the Month
                     else if(cid && ag && mo && !ye && !da)
                     {
                       //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '%-" + month + "-%' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_monthlydist.Customer_ID ASC;"
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '%-" + month + "-%' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_monthlydist.Customer_ID ASC"
                             ,"SELECT COUNT(*), jos_fb_monthlydist.Customer_ID FROM jos_fb_monthlydist WHERE theDate LIKE '%-" + month + "-%' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "');");
                     }
                   //The Customer_ID, the agency and the year
                     else if(cid && ag && !mo && ye && !da)
                     {
                       //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '" + year + "-%' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_monthlydist.Customer_ID ASC;"
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '" + year + "-%' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_monthlydist.Customer_ID ASC"
                             ,"SELECT COUNT(*), jos_fb_monthlydist.Customer_ID FROM jos_fb_monthlydist WHERE theDate LIKE '" + year + "-%' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "');");
                     }
                   //The Customer_ID, the agency and the Month and the day
                     else if(cid && ag && mo && !ye && da)
                     {
                       //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '%-" + month + "-" + day + "' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_monthlydist.Customer_ID ASC;"
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '%-" + month + "-" + day + "' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_monthlydist.Customer_ID ASC"
                             ,"SELECT COUNT(*), jos_fb_monthlydist.Customer_ID FROM jos_fb_monthlydist WHERE theDate LIKE '%-" + month + "-" + day + "' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "');");
                     }
                     //The CUstomer_ID, the agency, the month and year
                     else if(cid && ag && mo && ye && !da)
                     {
                       //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '"+ year + "-" + month + "-%' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_monthlydist.Customer_ID ASC;"
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '"+ year + "-" + month + "-%' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_monthlydist.Customer_ID ASC"
                             ,"SELECT COUNT(*), jos_fb_monthlydist.Customer_ID FROM jos_fb_monthlydist WHERE theDate LIKE '"+ year + "-" + month + "-%' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "');");   
                     }
                   
@@ -313,97 +314,97 @@ public class AdvancedSearchPanel extends JFrame {
                     else if(cid && ag && mo && ye && da)
                     {
                       //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '"+ year + "-" + month + "-" + day + "' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_monthlydist.Customer_ID ASC;"
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '"+ year + "-" + month + "-" + day + "' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_monthlydist.Customer_ID ASC"
                             ,"SELECT COUNT(*), jos_fb_monthlydist.Customer_ID FROM jos_fb_monthlydist WHERE theDate LIKE '"+ year + "-" + month + "-" + day + "' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "');");
                     }
                     //Customer ID and Month
                     else if(cid && !ag && mo && !ye && !da)
                     {
                       //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '%-" + month + "-%' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " ORDER BY jos_fb_monthlydist.Customer_ID ASC;"
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '%-" + month + "-%' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " ORDER BY jos_fb_monthlydist.Customer_ID ASC"
                             ,"SELECT COUNT(*), jos_fb_monthlydist.Customer_ID FROM jos_fb_monthlydist WHERE theDate LIKE '%-" + month + "-%' AND jos_fb_monthlydist.Customer_ID = "+ customerid + ";");
                     }
                     //Customer_ID and MOnth and Day
                     else if(cid && !ag && mo && !ye && da)
                     {
                       //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '%-" + month + "-" + day + "' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " ORDER BY jos_fb_monthlydist.Customer_ID ASC;"
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '%-" + month + "-" + day + "' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " ORDER BY jos_fb_monthlydist.Customer_ID ASC"
                             ,"SELECT COUNT(*), jos_fb_monthlydist.Customer_ID FROM jos_fb_monthlydist WHERE theDate LIKE '%-" + month + "-" + day + "' AND jos_fb_monthlydist.Customer_ID = "+ customerid + ";");
                     }
                     //Customer ID, Month and Year
                     else if(cid && !ag && mo && ye && !da)
                     {
                       //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '"+ year + "-" + month + "%' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " ORDER BY jos_fb_monthlydist.Customer_ID ASC;"
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '"+ year + "-" + month + "%' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " ORDER BY jos_fb_monthlydist.Customer_ID ASC"
                             ,"SELECT COUNT(*), jos_fb_monthlydist.Customer_ID FROM jos_fb_monthlydist WHERE theDate LIKE '"+ year + "-" + month + "%' AND jos_fb_monthlydist.Customer_ID = "+ customerid + ";");
                     }
                   //Customer ID, Month day and Year
                     else if(cid && !ag && mo && ye && da)
                     {
                         //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '"+ year + "-" + month + "-" + day + "' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " ORDER BY jos_fb_monthlydist.Customer_ID ASC;"
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '"+ year + "-" + month + "-" + day + "' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " ORDER BY jos_fb_monthlydist.Customer_ID ASC"
                             ,"SELECT COUNT(*), jos_fb_monthlydist.Customer_ID FROM jos_fb_monthlydist WHERE theDate LIKE '"+ year + "-" + month + "-" + day + "' AND Customer_ID = "+ customerid + ";");   
                     }
                     //Customer ID and Year
                     else if(cid && !ag && !mo && ye)
                     {
                       //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '"+ year + "%' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " ORDER BY jos_fb_monthlydist.Customer_ID ASC;"
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '"+ year + "%' AND jos_fb_monthlydist.Customer_ID = "+ customerid + " ORDER BY jos_fb_monthlydist.Customer_ID ASC"
                             ,"SELECT COUNT(*), jos_fb_monthlydist.Customer_ID FROM jos_fb_monthlydist WHERE theDate LIKE '"+ year + "%' AND jos_fb_monthlydist.Customer_ID = "+ customerid + ";");  
                     }
                     //Just Agency
                     else if(!cid && ag && !mo && !ye)
                     {
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') AND jos_fb_customer.Customer_ID = jos_fb_monthlydist.Customer_ID ORDER BY jos_fb_monthlydist.Customer_ID ASC;",
-                            "SELECT COUNT(*), jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') AND jos_fb_customer.Customer_ID = jos_fb_monthlydist.Customer_ID ORDER BY jos_fb_monthlydist.Customer_ID ASC;");
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') AND jos_fb_customer.Customer_ID = jos_fb_monthlydist.Customer_ID ORDER BY jos_fb_monthlydist.Customer_ID ASC",
+                            "SELECT COUNT(*), jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') AND jos_fb_customer.Customer_ID = jos_fb_monthlydist.Customer_ID;");
                     }
                     //Agency and Month
                     else if(!cid && ag && mo && !ye && !da)
                     {
                       //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '%-" + month + "-%' AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_monthlydist.Customer_ID ASC;"
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '%-" + month + "-%' AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_monthlydist.Customer_ID ASC"
                             ,"SELECT COUNT(*), jos_fb_monthlydist.Customer_ID FROM jos_fb_monthlydist WHERE theDate LIKE '%-" + month + "-%' AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "');");
                     }
                   //Agency and Month and day
                     else if(!cid && ag && mo && !ye && da)
                     {
                       //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '%" + month + "-" + day + "' AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_monthlydist.Customer_ID ASC;"
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '%" + month + "-" + day + "' AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_monthlydist.Customer_ID ASC"
                             ,"SELECT COUNT(*), jos_fb_monthlydist.Customer_ID FROM jos_fb_monthlydist WHERE theDate LIKE '%-" + month + "-" + day + "' AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "');");
                     }
                     //Agency, Month and Year
                     else if(!cid && ag && mo && ye && !da)
                     {
                       //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '"+ year + "-" + month + "%' AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_customer.Customer_ID ASC;"
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '"+ year + "-" + month + "%' AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_customer.Customer_ID ASC"
                             ,"SELECT COUNT(*), jos_fb_monthlydist.Customer_ID FROM jos_fb_monthlydist WHERE theDate LIKE '"+ year + "-" + month + "%' AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "');");
                     }
                     //Agency, Month and Year and day
                     else if(!cid && ag && mo && ye && da)
                     {
                       //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '"+ year + "-" + month + "-" + day + "' AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_customer.Customer_ID ASC;"
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '"+ year + "-" + month + "-" + day + "' AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_customer.Customer_ID ASC"
                             ,"SELECT COUNT(*), jos_fb_monthlydist.Customer_ID FROM jos_fb_monthlydist WHERE theDate LIKE '"+ year + "-" + month + "-" + day + "' AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "');");
                     }
                     //Agency and Year
                     else if(!cid && ag && !mo && ye)
                     {
                       //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '"+ year + "%' AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_customer.Customer_ID ASC;"
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '"+ year + "%' AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "') ORDER BY jos_fb_customer.Customer_ID ASC"
                             ,"SELECT COUNT(*), jos_fb_monthlydist.Customer_ID FROM jos_fb_monthlydist WHERE theDate LIKE '"+ year + "%' AND Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + agency + "');");
                     }
                     //Just Month
                     else if(!cid && !ag && mo && !ye && !da)
                     {
                         //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '%-" + month + "-%' ORDER BY jos_fb_customer.Customer_ID ASC;",
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '%-" + month + "-%' ORDER BY jos_fb_customer.Customer_ID ASC",
                             "SELECT COUNT(*), Customer_ID FROM jos_fb_monthlydist WHERE theDate LIKE '%-" + month + "-%';");
                     }
                     //Just Month and Year and day
                     else if(!cid && !ag && mo && ye && da)
                     {
                         //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate = '" + year + "-" + month + "-" + day + "' ORDER BY jos_fb_customer.Customer_ID ASC;",
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate = '" + year + "-" + month + "-" + day + "' ORDER BY jos_fb_customer.Customer_ID ASC",
                             "SELECT COUNT(*), Customer_ID FROM jos_fb_monthlydist WHERE theDate = '"+ year + "-" + month + "-" + day + "';");
                    
                     }
@@ -411,7 +412,7 @@ public class AdvancedSearchPanel extends JFrame {
                     else if(!cid && !ag && mo && ye && !da)
                     {
                         //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '" + year + "-" + month + "%' ORDER BY jos_fb_customer.Customer_ID ASC;",
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '" + year + "-" + month + "%' ORDER BY jos_fb_customer.Customer_ID ASC",
                             "SELECT COUNT(*), Customer_ID FROM jos_fb_monthlydist WHERE theDate LIKE '"+ year + "-" + month + "%';");
                    
                     }
@@ -419,37 +420,19 @@ public class AdvancedSearchPanel extends JFrame {
                     else if(!cid && !ag && !mo && ye)
                     {
                       //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '"+ year + "%' ORDER BY jos_fb_customer.Customer_ID ASC;",
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '"+ year + "%' ORDER BY jos_fb_customer.Customer_ID ASC",
                             "SELECT COUNT(*), Customer_ID FROM jos_fb_monthlydist WHERE theDate LIKE '"+ year + "%';");
                     }
                     //just month day
                     else if(!cid && !ag && mo && !ye && da)
                     {
                       //System.out.println("Date: " + date);
-                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '%-" + month + "-" + day + "' ORDER BY jos_fb_customer.Customer_ID ASC;",
+                        model.setQuery( "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, theDate, Acct_Num FROM jos_fb_monthlydist INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID AND jos_fb_monthlydist.theDate LIKE '%-" + month + "-" + day + "' ORDER BY jos_fb_customer.Customer_ID ASC",
                             "SELECT COUNT(*), Customer_ID FROM jos_fb_monthlydist WHERE theDate LIKE '%-" + month + "-" + day + "';");
                     }
                     else{
                         displayFailedDialog();
                     }
-                  /*  
-                    if (customerid != "") {
-                        System.out.println("WHOOPS");
-                        model.setQuery( "SELECT Customer_ID, First_Name, Last_Name, Street_Address, City, Zip_Code, Phone_Number FROM jos_fb_customer WHERE Customer_ID = '"+customerid+"' ORDER BY Customer_ID ASC;",
-                            "SELECT COUNT(*), Customer_ID, First_Name, Last_Name, Street_Address, City, Zip_Code, Phone_Number FROM jos_fb_customer WHERE Customer_ID = '"+customerid+"' ORDER BY Customer_ID ASC;");
-                    }
-                    
-                    else if (agency != "") {
-                        System.out.println("Got agency: "+agency);
-                        model.setQuery( "SELECT * FROM jos_fb_agency WHERE Agency_Name = \'"+agency+"\'",  "SELECT COUNT(*),* FROM jos_fb_agency WHERE Agency_Name = \'"+agency+"\'");
-                    }
-                    else if (month != "") {
-                        
-                    }
-                    else {
-                        System.out.println("GUESS I DIDN'T SEE IT");
-                    }
-                    */
                 }
                 catch ( Exception e1 )
                 {
@@ -571,8 +554,6 @@ public class AdvancedSearchPanel extends JFrame {
         private static final long serialVersionUID = 1L;
         ArrayList<String> ids = new ArrayList<String>();
         
-        //boolean first = false;
-        
         public AdvancedTableModel(
             Connection connL,
             boolean online,
@@ -581,8 +562,6 @@ public class AdvancedSearchPanel extends JFrame {
             connectedToDatabase = online;
             try
             {
-                System.out.println( "Test connection local: "
-                    + connL.toString() );
                 stmtL = connL.createStatement();
                 query = query1;
                 setQuery( query1, rcQuery );
@@ -600,27 +579,17 @@ public class AdvancedSearchPanel extends JFrame {
         {
             try
             {
-                System.out.println("IM SETTING A QUERY B4: "+ query);
-                System.out.println("Set Query");
                 query = query2;
-                System.out.println("IM SETTING A QUERY After: "+ query);
                 ids.clear();
-                System.out.println("reqCount: "+reqCount);
                     result = stmtL.executeQuery( reqCount );
                     numberOfRows = result.getInt( 1 );
-                    System.out.println("numRows: " + numberOfRows);
-                    result = stmtL.executeQuery( query );
+                    result = stmtL.executeQuery( query + ";" );
                   
                     while(result.next())
                     {
-                        //this is for agencies not customers
-                            //System.out.println("Set to a distribution query");
-                            String temp = result.getString("Customer_ID");
-                            System.out.println(result.getString("Customer_ID") + "," + result.getString("Last_Name") + "," + result.getString("First_Name") + "," + result.getString("theDate") + "," + result.getString("Acct_Num"));
-                            ids.add(temp);
+                            ids.add(result.getString("Customer_ID"));
                     }
-                    //first = true;
-                    result = stmtL.executeQuery( query );                  
+                    result = stmtL.executeQuery( query + ";" );                  
                     metaData = result.getMetaData();
 
                 fireTableStructureChanged();
@@ -652,7 +621,7 @@ public class AdvancedSearchPanel extends JFrame {
         public int getRowCount()
         {
             //Number of rows is the whole database
-            System.out.println("getting row count: "+numberOfRows);
+           
             return numberOfRows;
         }
 
@@ -677,18 +646,14 @@ public class AdvancedSearchPanel extends JFrame {
         {
             try
             {
-               /* if(first)
+                result = stmtL.executeQuery( query + " LIMIT 1 OFFSET " + r + ";" );
+                if(((r < numberOfRows && result.getRow() != ids.size()+1) || (result.getRow() == 1 && numberOfRows == 1)))
                 {
-                    result.next();
-                    first = false;
-                }
-                */
-                String temp = "";
-                    if((r < ids.size() && result.getRow() != ids.size()+1) || (result.getRow() == 1 && ids.size() == 1)){
-                    //String SELECT_ONE_ROW = "SELECT Customer_ID, Last_Name, First_Name, Street_Address, City, Zip_Code, Phone_Number FROM jos_fb_customer WHERE Customer_ID = ";
-                    
-                   
-                    if(col == 1){
+                    if(col == 0)
+                    {
+                        return result.getInt("Customer_ID");
+                    }
+                    else if(col == 1){
                         return result.getString("Last_Name");
                     }
                     else if(col == 2)
@@ -703,19 +668,11 @@ public class AdvancedSearchPanel extends JFrame {
                     {
                         return result.getString("Acct_Num");
                     }
-                    else if(col > 4)
+                    else
                     {
                        return "";
                     }
-                    
-                    result.next();
-                    return  result.getObject( col + 1  );
-                      //  temp = ids.get(r);
-                    //result = stmtL.executeQuery( SELECT_ONE_ROW + "'" + temp + "';" );
-                    //return result.getObject( col + 1  );
-                    }
-                    return "";
-
+                }
             }
             catch ( Exception e )
             {
@@ -728,10 +685,12 @@ public class AdvancedSearchPanel extends JFrame {
         public Class getColumnClass( int c ) throws IllegalStateException
         {
             try
-            {
-                String className = metaData.getColumnClassName( c + 1 );
-                return Class.forName( className );
+            {   
+                    String className = metaData.getColumnClassName( c + 1 );
+                    return Class.forName( className );  
+            //THERE IS NO COLUMN FOR IT TO GET A CLASS NAME FROM SO THE PROBLEM IS IN GET VALUE AT WITH THE RESULT SET ENDING.
             }
+            
             catch ( Exception exception )
             {
                 exception.printStackTrace();
@@ -742,14 +701,9 @@ public class AdvancedSearchPanel extends JFrame {
 
         public boolean isCellEditable( int row, int col )
         {
-            if ( col == 1 )
-            {
+           
                 return false;
-            }
-            else
-            {
-                return false;
-            }
+       
         }
     }
 
