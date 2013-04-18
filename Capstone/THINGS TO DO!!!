@@ -2,13 +2,14 @@ Make only AgnecyReps for only specific agency popup
 Disable angecyRep until a agency is selected
 Implement queue throughout all classes
 Implement log throughout all classes
-Fix scroll bar on tables (advanced search, generatePDF, distribution input) - DONE
+DONE - Fix scroll bar on tables (advanced search, generatePDF, distribution input)
 Implement offender
 Add logo and other flashiness
 Add agencyRep on advancedsearch
-Change size of pdfGenerator
+DONE - Change size of pdfGenerator
 Change size of frames so they don't change
 Implement create pdf in SDI form gui
 Implement updating distribution in partial update
 fix timer
 Fix Customer Search panel column names
+Make at least one of the Govt. assitance options necessary for a customer.
