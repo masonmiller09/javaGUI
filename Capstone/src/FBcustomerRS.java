@@ -928,7 +928,7 @@ public class FBcustomerRS
         try
         {
             String sql = "SELECT * FROM jos_fb_customer WHERE Customer_ID = "
-                + customer_ID+":";
+                + customer_ID+";";
             stmtL = connL.createStatement();
             rsL = stmtL.executeQuery( sql );
             rsL.next();
