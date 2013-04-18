@@ -647,8 +647,6 @@ public class AdvancedSearchPanel extends JFrame {
             try
             {
                 result = stmtL.executeQuery( query + " LIMIT 1 OFFSET " + r + ";" );
-                if(((r < numberOfRows && result.getRow() != ids.size()+1) || (result.getRow() == 1 && numberOfRows == 1)))
-                {
                     if(col == 0)
                     {
                         return result.getInt("Customer_ID");
@@ -672,7 +670,6 @@ public class AdvancedSearchPanel extends JFrame {
                     {
                        return "";
                     }
-                }
             }
             catch ( Exception e )
             {
