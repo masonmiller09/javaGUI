@@ -3,6 +3,7 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
@@ -52,20 +53,11 @@ public class GeneratePdfPanel extends JFrame {
     JComboBox agencyBox;
     int agencySize, population;
     private Object[] currentInfo;
-    private String[] agencyOptions/* = {"","Agape Cathedral Center","An Acheivable Dream","Andrews Elementary","Beauty for Ashes","Behind the Veil Ministry","Berachah Church","Berkley Village Apartments","Bethel Temple","Booker Elementary","Bread for Life","Buckroe Baptist Church",
-            "C.H.P. Lafayette Village","C.H.P. Rivermede","C.H.P. Woods @ Yorktown", "Cary Elementary","Checed Warwick","Christ Temple Holiness Church","Coastal Community Church","Deeper Life Assembly","Doris Miller Center","Dunamis Christian Center",
-            "Emmanuel House Inc.","Empowered Believers Christian","First Baptist - Jefferson Park","First Baptist Denbigh","Five Loaves","Forrest Elementary","Garden of Prayer","Gleaning Baptist Church","Greater Bethlehem Christ. As.","Greater Emmanuel Ministries",
-            "Greater Works Ministries","Grove Christian Outreach","Holy Tabernacle Church","Hope House Ministries","Ivy Baptist Church","Ivy Farms Church","JTC Lifechanging Center Inc.","Just-Us-Kidz Inc.","Langley Elementary","Langley Village","Lexington Commons",
-            "Lifeline Full Gospel","Living Faith Christian Center","Living Waters Family Outreach","Living Waters Way of the Cross","Magruder Elementary","Mercy Seat Bapt.","Mt. Calvary SDA Church","Mt. Calvary Baptist","New Beginnings","New Bethel International",
-            "New Hope Baptist Church","New Life Ministry Center","Newport News Housing","Oasis of Life","Open Door Full Gospel","Operation Breaking Through","Peninsula Hispanic SDA","Perfecting Saints Ministries","Pinecroft","Pocahontas Temple","Poquoson",
-            "Salem UMC","Salvation Army (Hampton)","Salvation Army (Williamsburg)","Seton Manor","Smith Elementary","Spirit of Truth Ministries","Sr. Christian Village of E. VA.","St. James Deliverance","St. John Baptist Church","St. Marks UMC","St. Timothy Church",
-            "Surry Community Center 1","Tarrant Elementary","Temple of Life / New Life","Temple of Peace","Temple of Refuge","Triumph Christian Center","Tyler Elementary","W.M. Ratley Road Ahead","Warwick Assembly of God","White Marsh Baptist Church",
-            "Williamsburg/Blayton Building","Williamsburg/Burnt Ordinary","Williamsburg/Katherine Circle","Williamsburg/Mimosa Woods","Williamsburg/Sylvia Brown","World Outreach Worship Center","YWCA","Zion Prospect Baptist Church"}*/;
+    private String[] agencyOptions;
     private String query = "";
     private String Aname ="";
-    static final String INITIAL_QUERY = "SELECT Customer_ID, First_Name, Last_Name, City, Zip_Code, Phone_Number FROM jos_fb_customer WHERE Customer_ID = 'a';";
-    
-    static final String SIZE_DATABASE_QUERY = "SELECT COUNT(Customer_ID) FROM jos_fb_customer;";
+    static final String INITIAL_QUERY = "SELECT Customer_ID, First_Name, Last_Name, City, Zip_Code, Phone_Number FROM jos_fb_customer WHERE Customer_ID = 'a'";   
+    static final String SIZE_DATABASE_QUERY = "SELECT COUNT(*),Customer_ID FROM jos_fb_customer;";
     
     
     public GeneratePdfPanel(Connection connL2, queryQue que, boolean online2, boolean visible, FeastMainFrame f) {
@@ -94,7 +86,7 @@ public class GeneratePdfPanel extends JFrame {
             e.printStackTrace();
         }
         fmf = f;
-        setSize(650,150);
+        setSize((int)Toolkit.getDefaultToolkit().getScreenSize().getWidth()/3+25, (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight()/3);
         initComponents();
         setDefaultCloseOperation( WindowConstants.DO_NOTHING_ON_CLOSE );
         addWindowListener( new WindowListener()
@@ -157,8 +149,9 @@ public class GeneratePdfPanel extends JFrame {
         //table
         model = new PDFTableModel( connL, online, INITIAL_QUERY, "SELECT COUNT(*), Customer_ID FROM jos_fb_customer WHERE Customer_ID = 'a'" );
         JTable table = new JTable(model);
-        table.setPreferredSize(new Dimension(getWidth(),200));
+        table.setPreferredSize(new Dimension(getWidth()-50,getHeight()/2));
         table.setFont(new Font("Times New Roman", Font.PLAIN, 14));
+        table.setAutoResizeMode( JTable.AUTO_RESIZE_ALL_COLUMNS );
         final JScrollPane scroll = new JScrollPane(table);
         listModel = table.getSelectionModel();
         listModel.setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
@@ -186,7 +179,7 @@ public class GeneratePdfPanel extends JFrame {
                 Aname = agency;
                 System.out.println("Aname: "+Aname);
                 String agencyonlyquery = "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, jos_fb_monthlydist.theDate, jos_fb_monthlydist.Acct_Num FROM jos_fb_monthlydist " +
-                "INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + Aname + "') AND jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID ORDER BY jos_fb_monthlydist.theDate DESC, jos_fb_customer.Last_Name ASC;";
+                "INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '" + Aname + "') AND jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID ORDER BY jos_fb_customer.Customer_ID ASC, jos_fb_monthlydist.theDate ASC";
             String requery = "SELECT COUNT(*), Customer_ID FROM jos_fb_monthlydist WHERE Acct_Num = (SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = '"+Aname+"');";
                 setSize(650,300);
                 scroll.setVisible(true);
@@ -300,8 +293,6 @@ public class GeneratePdfPanel extends JFrame {
         private static final long serialVersionUID = 1L;
         ArrayList<String> ids = new ArrayList<String>();
         
-        //boolean first = false;
-        
         public PDFTableModel(
             Connection connL,
             boolean online,
@@ -310,8 +301,6 @@ public class GeneratePdfPanel extends JFrame {
             connectedToDatabase = online;
             try
             {
-                System.out.println( "Test connection local: "
-                    + connL.toString() );
                 stmtL = connL.createStatement();
                 query = query1;
                 setQuery( query1, rcQuery );
@@ -329,27 +318,17 @@ public class GeneratePdfPanel extends JFrame {
         {
             try
             {
-                System.out.println("IM SETTING A QUERY B4: "+ query);
-                System.out.println("Set Query");
                 query = query2;
-                System.out.println("IM SETTING A QUERY After: "+ query);
                 ids.clear();
-                System.out.println("reqCount: "+reqCount);
                     result = stmtL.executeQuery( reqCount );
                     numberOfRows = result.getInt( 1 );
-                    System.out.println("numRows: " + numberOfRows);
-                    result = stmtL.executeQuery( query );
+                    result = stmtL.executeQuery( query + ";" );
                   
                     while(result.next())
                     {
-                        //this is for agencies not customers
-                            //System.out.println("Set to a distribution query");
-                            String temp = result.getString("Customer_ID");
-                            System.out.println(result.getString("Customer_ID") + "," + result.getString("Last_Name") + "," + result.getString("First_Name") + "," + result.getString("theDate") + "," + result.getString("Acct_Num"));
-                            ids.add(temp);
+                            ids.add(result.getString("Customer_ID"));
                     }
-                    //first = true;
-                    result = stmtL.executeQuery( query );                  
+                    result = stmtL.executeQuery( query + ";" );                  
                     metaData = result.getMetaData();
 
                 fireTableStructureChanged();
@@ -366,7 +345,7 @@ public class GeneratePdfPanel extends JFrame {
         {
             try
             {
-               // System.out.println("getting column count: "+metaData.getColumnCount());
+                System.out.println("getting column count: "+metaData.getColumnCount());
                 return metaData.getColumnCount();
             }
             catch ( Exception e )
@@ -381,13 +360,13 @@ public class GeneratePdfPanel extends JFrame {
         public int getRowCount()
         {
             //Number of rows is the whole database
-            //System.out.println("getting row count: "+numberOfRows);
+           
             return numberOfRows;
         }
 
 
         @Override
-        public String getColumnName( int column )
+        public String getColumnName( int column ) throws IllegalStateException
         {
             try
             {
@@ -406,44 +385,30 @@ public class GeneratePdfPanel extends JFrame {
         {
             try
             {
-               System.out.println("r: " + r + "; col: " + col);
-                String temp = "";
-                    if((r < ids.size() && result.getRow() != ids.size()+1) || (result.getRow() == 1 && ids.size() == 1)){
-                    //String SELECT_ONE_ROW = "SELECT Customer_ID, Last_Name, First_Name, Street_Address, City, Zip_Code, Phone_Number FROM jos_fb_customer WHERE Customer_ID = ";
-                    System.out.println("Im here");
-                   
-                    if(col == 1){
-                        System.out.println("Im here at col =1");
+                result = stmtL.executeQuery( query + " LIMIT 1 OFFSET " + r + ";" );
+                    if(col == 0)
+                    {
+                        return result.getInt("Customer_ID");
+                    }
+                    else if(col == 1){
                         return result.getString("Last_Name");
                     }
                     else if(col == 2)
                     {
-                        System.out.println("Im here at col = 2");
                         return result.getString("First_Name");
                     }
                     else if(col == 3)
                     {
-                        System.out.println("Im here at col = 3");
                         return result.getString("theDate");
                     }
                     else if(col == 4)
                     {
-                        System.out.println("Im here at col = 4");
                         return result.getString("Acct_Num");
                     }
-                    else if(col > 4)
+                    else
                     {
                        return "";
                     }
-                    
-                    result.next();
-                    return  result.getObject( col + 1  );
-                      //  temp = ids.get(r);
-                    //result = stmtL.executeQuery( SELECT_ONE_ROW + "'" + temp + "';" );
-                    //return result.getObject( col + 1  );
-                    }
-                    return "";
-
             }
             catch ( Exception e )
             {
@@ -453,13 +418,15 @@ public class GeneratePdfPanel extends JFrame {
         }
 
 
-        public Class getColumnClass( int c )
+        public Class getColumnClass( int c ) throws IllegalStateException
         {
             try
-            {
-                String className = metaData.getColumnClassName( c + 1 );
-                return Class.forName( className );
+            {   
+                    String className = metaData.getColumnClassName( c + 1 );
+                    return Class.forName( className );  
+            //THERE IS NO COLUMN FOR IT TO GET A CLASS NAME FROM SO THE PROBLEM IS IN GET VALUE AT WITH THE RESULT SET ENDING.
             }
+            
             catch ( Exception exception )
             {
                 exception.printStackTrace();
@@ -470,14 +437,9 @@ public class GeneratePdfPanel extends JFrame {
 
         public boolean isCellEditable( int row, int col )
         {
-            if ( col == 1 )
-            {
+           
                 return false;
-            }
-            else
-            {
-                return false;
-            }
+       
         }
     }
 
@@ -502,7 +464,7 @@ public class GeneratePdfPanel extends JFrame {
                     if ( lsm.isSelectedIndex( i ) )
                     {
                         selected.add( i + 1 );
-                        System.out.println("Selected " + selected.get( i+1 ));
+                    //    System.out.println("Selected " + selected.get( i+1 ));
                     }
                 }
             }
