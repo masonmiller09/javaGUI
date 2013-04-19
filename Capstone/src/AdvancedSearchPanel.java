@@ -58,18 +58,14 @@ public class AdvancedSearchPanel extends JFrame {
     JTextField customerBox,yearBox;
     JButton searchButton,clearButton,mainPage;
     private String[] monthList = {"","01","02","03","04","05","06","07","08","09","10","11","12"};
-    private String[] agencyOptions;
-    public int agencySize = 0;
     static final String INITIAL_QUERY = "SELECT Customer_ID, First_Name, Last_Name, Street_Address, City, Zip_Code, Phone_Number FROM jos_fb_customer ORDER BY Customer_ID ASC";
     static final String INITIAL_QUERY_COUNT = "SELECT COUNT(*), Customer_ID, First_Name, Last_Name, Street_Address, City, Zip_Code, Phone_Number FROM jos_fb_customer;";
     static final String SIZE_DATABASE_QUERY = "SELECT COUNT(*), Customer_ID FROM jos_fb_customer;";
     private String query = "",prevMonth;
     public String Aname = "";
     public String AGENCY_SEARCH_QUERY = "SELECT Acct_Num FROM jos_fb_agency WHERE Agency_Name = ";
-   // public String ADV_SEARCH_QUERY = "SELECT Customer_ID, First_Name, Last_Name FROM jos_fb_customer WHERE Customer_ID = (SELECT Customer_ID, theDate " +
-   //     	" FROM jos_fb_monthlydist WHERE Acct_Num = (SELECT Acct_Num From jos_fb_agency WHERE Agency_Name = '" + name + "'););";
     public String agencyonlyquery = "SELECT jos_fb_customer.Customer_ID, jos_fb_customer.First_Name, jos_fb_customer.Last_Name, jos_fb_monthlydist.theDate, jos_fb_monthlydist.Acct_Num FROM jos_fb_monthlydist " +
-    		"INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Acct_Num = '" + Aname + "' AND jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID ORDER BY jos_fb_monthlydist.theDate DESC, jos_fb_customer.Last_Name ASC";
+        	"INNER JOIN jos_fb_customer ON jos_fb_monthlydist.Acct_Num = '" + Aname + "' AND jos_fb_monthlydist.Customer_ID = jos_fb_customer.Customer_ID ORDER BY jos_fb_monthlydist.theDate DESC, jos_fb_customer.Last_Name ASC";
     
     boolean ag = false;
     boolean cid = false;
@@ -84,34 +80,8 @@ public class AdvancedSearchPanel extends JFrame {
         dayboxopen =false;
         try
         {
-            //name = "YWCA";
             stmtL = connL.createStatement();
-           /* result = stmtL.executeQuery( agencyonlyquery );
-            int test = 0;
-            while(result.next())
-            {
-                System.out.println("Here");
-                System.out.println(result.getString( "Customer_ID" ));
-                System.out.println(result.getString("First_Name"));
-                System.out.println(result.getString( "Last_Name" ));
-                System.out.println(result.getString("theDate"));
-                System.out.println(result.getString( "Acct_Num" ));
-                test++;
-            }
-            System.out.println(test);*/
-            result = stmtL.executeQuery( "SELECT COUNT(*), Agency_Name FROM jos_fb_agency;" );
-            agencySize = result.getInt(1);
-            System.out.println("agency Size: " + agencySize);
-            agencyOptions = new String[agencySize+1];
-            agencyOptions[0] = "";
-            result = stmtL.executeQuery( "SELECT Agency_Name FROM jos_fb_agency ORDER BY Agency_Name ASC" );
-            result.next();
-            for(int i = 1; i <= agencySize; i++)
-            {
-                agencyOptions[i] = result.getString( "Agency_Name" );
-                //System.out.println("aName: " + agencyOptions[i]);
-                result.next();
-            }
+           
         }
         catch ( SQLException e )
         {
@@ -172,7 +142,22 @@ public class AdvancedSearchPanel extends JFrame {
         panel5.setPreferredSize(new Dimension(getWidth(),40));
         panel6.setPreferredSize(new Dimension(getWidth(),40));
         agencyLabel = new JLabel("Select Agency:");
-        agencyBox = new JComboBox(agencyOptions);
+        agencyBox = new JComboBox();
+        agencyBox.addItem( "" );
+        try
+        {
+            stmtL = connL.createStatement();
+            result = stmtL.executeQuery( "SELECT Agency_Name FROM jos_fb_agency ORDER BY Agency_Name ASC;" );
+            while(result.next()){
+                agencyBox.addItem( result.getObject( "Agency_Name" ));
+            }
+            
+        }
+        catch ( SQLException e )
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         dateLabel = new JLabel("Enter Date: ");
         monthLabel = new JLabel("M");
         monthBox = new JComboBox(monthList);
