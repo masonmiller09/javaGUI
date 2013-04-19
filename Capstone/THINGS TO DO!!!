@@ -12,6 +12,7 @@ Add agencyRep on advancedsearch
 Implement log throughout all classes
 Fix the clear forms to not produce a daybox, daylabel or space
 fix timer
+get the agency box off of the customer search sdi form
 
 
 Would Be Nice:
