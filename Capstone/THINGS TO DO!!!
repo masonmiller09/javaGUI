@@ -1,6 +1,7 @@
 Urgent and Important:
 Make at least one of the Govt. assitance options necessary for a customer.
-Add semi colons to all queries in the object classes(FBcustomerRS -done, FBAgency, FBAgencyRep, FBMonthlydist...)
+Add semi colons to all queries in the object classes(FBcustomerRS -done, FBAgency - done, FBAgencyRep - done
+  , FBMonthlydist...)
 Test Print an SDI form.
 fix Merged PDF form
 fix timer
