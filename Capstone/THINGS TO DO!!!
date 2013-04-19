@@ -14,6 +14,7 @@ Important:
 Add agencyRep on advancedsearch
 Implement log throughout all classes
 Implement updating distribution in partial update
+Fix the clear forms to not produce a daybox, daylabel or space
 
 
 Would Be Nice:
@@ -32,3 +33,4 @@ DONE - Fix Customer Search panel column names
 POSSIBLY DONE - Implement queue throughout all classes(FBcustomerRS -done)
 DONE - Make only AgnecyReps for only specific agency popup
 DONE - Disable angecyRep until a agency is selected
+DONE = Eliminated the arrays(agencyOptions and agencyRepOptions)
