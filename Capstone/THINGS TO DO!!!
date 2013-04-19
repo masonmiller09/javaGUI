@@ -1,5 +1,6 @@
 Urgent and Important:
 Make at least one of the Govt. assitance options necessary for a customer.
+Add scroll bar to customerSearchPanel
 Add semi colons to all queries in the object classes(FBcustomerRS -done, FBAgency - done, FBAgencyRep - done
   , FBMonthlydist...)
 Test Print an SDI form.
