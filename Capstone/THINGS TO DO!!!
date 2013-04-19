@@ -3,23 +3,21 @@ Make at least one of the Govt. assitance options necessary for a customer.
 Add scroll bar to customerSearchPanel
 Test Print an SDI form.
 fix Merged PDF form
-fix timer
-
+Implement updating distribution in partial update
 
 
 
 Important:
 Add agencyRep on advancedsearch
 Implement log throughout all classes
-Implement updating distribution in partial update
 Fix the clear forms to not produce a daybox, daylabel or space
+fix timer
 
 
 Would Be Nice:
 Implement offender
 Add logo and other flashiness
 Change size of frames so they don't change
-When Online database is updated do a pop up showing what was added or updated ( Only at initial connect).
 Make it add the days date by default.
 
 DONE:
