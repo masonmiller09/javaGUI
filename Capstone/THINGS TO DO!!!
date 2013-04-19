@@ -22,6 +22,7 @@ Implement offender
 Add logo and other flashiness
 Change size of frames so they don't change
 When Online database is updated do a pop up showing what was added or updated ( Only at initial connect).
+Make it add the days date by default.
 
 DONE:
 DONE - Fix scroll bar on tables (advanced search, generatePDF, distribution input)
