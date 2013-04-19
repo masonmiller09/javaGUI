@@ -6,8 +6,7 @@ Add semi colons to all queries in the object classes(FBcustomerRS -done, FBAgenc
 Test Print an SDI form.
 fix Merged PDF form
 fix timer
-Make only AgnecyReps for only specific agency popup
-Disable angecyRep until a agency is selected
+
 
 
 
@@ -31,3 +30,5 @@ DONE - Implement create pdf in SDI form gui
 DONE - SDIForm GUI PDF Generator
 DONE - Fix Customer Search panel column names
 POSSIBLY DONE - Implement queue throughout all classes(FBcustomerRS -done)
+DONE - Make only AgnecyReps for only specific agency popup
+DONE - Disable angecyRep until a agency is selected
