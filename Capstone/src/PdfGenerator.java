@@ -20,6 +20,7 @@ import java.util.List;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -35,6 +36,7 @@ import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfStamper;
 import com.itextpdf.text.pdf.PdfWriter;
 
+
 public class PdfGenerator
 {
     private static ArrayList<Object> auto;
@@ -42,7 +44,7 @@ public class PdfGenerator
 
     public static void populateSDIForm(
         Object[] customerInfo,
-        Object[] agencyInfo)
+        Object[] agencyInfo )
     {
         String pdfTemplate = "Editable_SDI_Form.pdf";
         String newFile = "C:\\Windows\\Temp\\Feast\\populated_SDI_Form.pdf";
@@ -126,11 +128,14 @@ public class PdfGenerator
                 + customerInfo[2] );
             pdfStamper.setFormFlattening( false );
             pdfStamper.close();
-            File pdfFile = new File("C:\\Windows\\Temp\\Feast\\populated_SDI_Form.pdf");
-            if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().open(pdfFile);
-            } else {
-                System.out.println("Awt Desktop is not supported!");
+            File pdfFile = new File( "C:\\Windows\\Temp\\Feast\\populated_SDI_Form.pdf" );
+            if ( Desktop.isDesktopSupported() )
+            {
+                Desktop.getDesktop().open( pdfFile );
+            }
+            else
+            {
+                System.out.println( "Awt Desktop is not supported!" );
             }
         }
         catch ( DocumentException e )
@@ -140,6 +145,10 @@ public class PdfGenerator
         catch ( IOException e )
         {
             // TODO Auto-generated catch block
+            JOptionPane.showMessageDialog( null,
+                "Please close the open PDF Form \"populated_SDI_Form.pdf\" and try again.\nPlease use the PDF Generator button to make multiple PDFs.",
+                "Generate PDF Error",
+                JOptionPane.INFORMATION_MESSAGE );
             e.printStackTrace();
         }
     }
@@ -148,11 +157,11 @@ public class PdfGenerator
     public static void populateSDIForm(
         Object[] customerInfo,
         Object[] agencyInfo,
-        Object[] agentInfo,
         int population )
     {
         String pdfTemplate = "Editable_SDI_Form.pdf";
-        String newFile = "C:\\Windows\\Temp\\Feast\\populated_SDI_Form_" + population + ".pdf";
+        String newFile = "C:\\Windows\\Temp\\Feast\\populated_SDI_Form_"
+            + population + ".pdf";
         PdfReader pdfReader;
         try
         {
@@ -162,8 +171,6 @@ public class PdfGenerator
             AcroFields pdfFormFields = pdfStamper.getAcroFields();
             pdfFormFields.setField( "Agency_Name", agencyInfo[1].toString() );
             pdfFormFields.setField( "Account_Number", agencyInfo[0].toString() );
-            pdfFormFields.setField( "Agency_Rep", agentInfo[4] + " "
-                + agentInfo[3] );
             pdfFormFields.setField( "Applicant_Name", customerInfo[3] + " "
                 + customerInfo[2] );
             pdfFormFields.setField( "Street_Address", (String)customerInfo[4] );
@@ -231,12 +238,11 @@ public class PdfGenerator
             pdfFormFields.setField( "Date_2", "" );
             pdfFormFields.setField( "Signature_3", "" );
             pdfFormFields.setField( "Date_3", "" );
-            pdfFormFields.setField( "Applicant_authorizing", agentInfo[4] + " "
-                + agentInfo[3] );
             pdfFormFields.setField( "Authorized", customerInfo[3] + " "
                 + customerInfo[2] );
             pdfStamper.setFormFlattening( false );
             pdfStamper.close();
+            System.out.println( "PRINTED" );
         }
         catch ( DocumentException e )
         {
@@ -249,19 +255,29 @@ public class PdfGenerator
         }
     }
 
-    public static void mergePdfFiles(int population) {
-        List<InputStream> list = new ArrayList<InputStream>();
+    public static void mergePdfFiles(int population)
+    {
+        List<String> list = new ArrayList<String>();
         try {
             // Source pdfs
             while(population > 0) {
-                list.add(new FileInputStream(new File("C:\\Windows\\Temp\\Feast\\populated_SDI_Form_" + (population-1) + ".pdf")));
+                String fileName = "C:\\Windows\\Temp\\Feast\\populated_SDI_Form_" + (population-1) + ".pdf";
+                list.add(fileName);
                 population--;
             }
             System.out.println("List size: "+list.size()+" Population: "+population);
             // Resulting pdf
             OutputStream out = new FileOutputStream(new File("C:\\Windows\\Temp\\Feast\\result.pdf"));
 
-            doMerge(list, out);
+            try
+            {
+                doMerge(list, out);
+            }
+            catch ( DocumentException e )
+            {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -269,51 +285,35 @@ public class PdfGenerator
             e.printStackTrace();
         }
     }
-
-    private static void doMerge(List<InputStream> list, OutputStream out) {
-
-        try {
-            Document document = null;
-            PdfCopy writer = null;
-
-            for (InputStream in : list) {
-                PdfReader reader = new PdfReader(in);
-                if (in == list.get(0)) {
-                    document = new Document(reader.getPageSizeWithRotation(1));
-                    writer = new PdfCopy(document, out);
-                    document.open();
-                }
-                System.out.println("I'm in");
-                for (int i = 1; i <= reader.getNumberOfPages(); i++) {
-                    document.newPage();
-                    //import the page from source pdf
-                    PdfImportedPage page = writer.getImportedPage(reader, i);
-                    //add the page to the destination pdf
-                    writer.addPage(page);
-                }
-                System.out.println("About to get shit");
-                writer.copyAcroForm(reader);
-                in.close();
-            }
-            File pdfFile = new File("C:\\Windows\\Temp\\Feast\\result.pdf");
-            if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().open(pdfFile);
-            } else {
-                System.out.println("Awt Desktop is not supported!");
-            }
-            out.flush();
-            document.close();
-            out.close();
-        } 
-        catch (DocumentException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        catch ( IOException e )
+    
+    public static void doMerge(
+        List<String> list,
+        OutputStream outputStream ) throws DocumentException, IOException
+    {
+        Document document = new Document();
+        PdfCopy writer = new PdfCopy( document, outputStream );
+        document.open();
+        PdfReader ReadInputPDF;
+        int number_of_pages;
+        
+        for(int i= 0; i < list.size(); i++)
         {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            ReadInputPDF = new PdfReader(list.get( i ));
+            number_of_pages = ReadInputPDF.getNumberOfPages();
+            for(int page = 0; page < number_of_pages; )
+            {
+                writer.addPage( writer.getImportedPage( ReadInputPDF, ++page ) );
+            }
         }
         
+        File pdfFile = new File("C:\\Windows\\Temp\\Feast\\result.pdf");
+        if (Desktop.isDesktopSupported()) {
+            Desktop.getDesktop().open(pdfFile);
+        } else {
+            System.out.println("Awt Desktop is not supported!");
+        }
+        outputStream.flush();
+        document.close();
+        outputStream.close();
     }
 }
