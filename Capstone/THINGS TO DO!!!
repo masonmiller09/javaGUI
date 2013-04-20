@@ -2,17 +2,15 @@ Urgent and Important:
 Make at least one of the Govt. assitance options necessary for a customer.
 Add scroll bar to customerSearchPanel
 Test Print an SDI form.
-fix Merged PDF form
-Implement updating distribution in partial update
+
 
 
 
 Important:
-Add agencyRep on advancedsearch
+
 Implement log throughout all classes
 Fix the clear forms to not produce a daybox, daylabel or space
 fix timer
-get the agency box off of the customer search sdi form
 
 
 Would Be Nice:
@@ -33,4 +31,5 @@ DONE - Disable angecyRep until a agency is selected
 DONE - Eliminated the arrays(agencyOptions and agencyRepOptions)
 DONE - Add semi colons to all queries in the object classes(FBcustomerRS -done, FBAgency - done, FBAgencyRep - done
   , done - FBMonthlydist)
-
+DONE - Add agencyRep on advancedsearch
+DONE - fix Merged PDF form
