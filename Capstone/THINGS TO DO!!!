@@ -1,6 +1,5 @@
 Urgent and Important:
 Make at least one of the Govt. assitance options necessary for a customer.
-SDI form pop up on adv search panel
 Test Print an SDI form.
 CLEAN OUT CODE OF PRINTS AND COMMENTED OUT CODE!!!!!!!
 
@@ -32,3 +31,4 @@ DONE - Add semi colons to all queries in the object classes(FBcustomerRS -done, 
 DONE - Add agencyRep on advancedsearch
 DONE - fix Merged PDF form
 DONE - Add scroll bar to customerSearchPanel
+DONE - SDI form pop up on adv search panel
