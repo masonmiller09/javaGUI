@@ -1,13 +1,11 @@
 Urgent and Important:
 Make at least one of the Govt. assitance options necessary for a customer.
-Add scroll bar to customerSearchPanel
+SDI form pop up on adv search panel
 Test Print an SDI form.
-
-
+CLEAN OUT CODE OF PRINTS AND COMMENTED OUT CODE!!!!!!!
 
 
 Important:
-
 Implement log throughout all classes
 Fix the clear forms to not produce a daybox, daylabel or space
 fix timer
@@ -17,7 +15,7 @@ Would Be Nice:
 Implement offender
 Add logo and other flashiness
 Change size of frames so they don't change
-Make it add the days date by default.
+Make it add the current days date by default.
 
 DONE:
 DONE - Fix scroll bar on tables (advanced search, generatePDF, distribution input)
@@ -33,3 +31,4 @@ DONE - Add semi colons to all queries in the object classes(FBcustomerRS -done, 
   , done - FBMonthlydist)
 DONE - Add agencyRep on advancedsearch
 DONE - fix Merged PDF form
+DONE - Add scroll bar to customerSearchPanel
